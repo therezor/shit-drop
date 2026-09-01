@@ -25,10 +25,10 @@ export function mountRail(root, { paytable = [], extra = '' } = {}) {
   root.innerHTML = `
     ${extra}
     <div class="panel">
-      <div class="panel__hd">Your stake <span class="dim" id="railMax">max 500</span></div>
+      <div class="panel__hd">Your bet <span class="dim" id="railMax">most you can bet: 500</span></div>
       <div class="panel__bd rail">
         <div class="field">
-          <span class="field__l">Bet amount</span>
+          <span class="field__l">How much per go</span>
           <div class="betrow">
             <button id="betDown" aria-label="Decrease bet">−</button>
             <input id="betInput" type="number" min="1" max="500" step="1" value="10"
@@ -43,39 +43,39 @@ export function mountRail(root, { paytable = [], extra = '' } = {}) {
       </div>
     </div>
 
-    <div class="panel">
-      <div class="panel__hd">Your session <span class="dim">honest numbers</span></div>
+    <details class="panel fold" open>
+      <summary class="panel__hd">How it is going <span class="fold__peek" id="statPeek"></span></summary>
       <div class="panel__bd">
         <div class="statlist">
-          <div><span>Rounds played</span><span id="stSpins">0</span></div>
-          <div><span>Total staked</span><span id="stWagered">0.00</span></div>
-          <div><span>Total returned</span><span id="stReturned">0.00</span></div>
-          <div><span>Net</span><span id="stNet">0.00</span></div>
-          <div><span>Your actual RTP</span><span id="stRtp">—</span></div>
-          <div><span>Loss streak</span><span id="stStreak">0</span></div>
+          <div><span>Goes</span><span id="stSpins">0</span></div>
+          <div><span>Money you put in</span><span id="stWagered">0.00</span></div>
+          <div><span>Money you got back</span><span id="stReturned">0.00</span></div>
+          <div><span>Money gone</span><span id="stNet">0.00</span></div>
+          <div><span>You get back</span><span id="stRtp">—</span></div>
+          <div><span>Losses in a row</span><span id="stStreak">0</span></div>
         </div>
       </div>
-    </div>
+    </details>
 
     ${paytable.length ? `
-    <div class="panel">
-      <div class="panel__hd">Paytable <span class="dim">decorative</span></div>
+    <details class="panel fold">
+      <summary class="panel__hd">Prize list <span class="dim">just a poster</span></summary>
       <div class="panel__bd paytable">
         ${paytable.map(([sym, val, never]) => `
           <div><span class="sym">${sym}</span><span class="val${never ? ' never' : ''}">${val}</span></div>`).join('')}
         <div style="border:0;padding-top:10px">
-          <span class="dim" style="font-size:10.5px">Advertised RTP ${ADVERTISED_RTP}. This table has
-          no effect on any outcome.</span>
+          <span class="dim" style="font-size:10.5px">We say you get back ${ADVERTISED_RTP}. This list
+          changes nothing at all. It is a poster on a wall.</span>
         </div>
       </div>
-    </div>` : ''}
+    </details>` : ''}
 
-    <div class="panel">
-      <div class="panel__hd">Round history</div>
+    <details class="panel fold">
+      <summary class="panel__hd">Your last goes</summary>
       <div class="log" id="log">
         <div class="log__row"><span class="dim">nothing yet</span><span class="dim">—</span></div>
       </div>
-    </div>`;
+    </details>`;
 
   /* ---- bet stepper ---- */
   const input = root.querySelector('#betInput');
@@ -108,7 +108,7 @@ export function mountRail(root, { paytable = [], extra = '' } = {}) {
   chips.forEach((c) => c.addEventListener('click', () => {
     if (c.dataset.chip === 'max') {
       apply(Math.max(bank.MIN_BET, Math.min(bank.MAX_BET, Math.floor(bank.credits()))));
-      fanfare.toast('ALL IN. The single most profitable button on this website. For us.', 'info', 4000);
+      fanfare.toast('EVERYTHING. This is our favourite button on the whole website.', 'info', 4000);
       sfx.airhorn();
     } else apply(c.dataset.chip);
   }));
@@ -133,6 +133,11 @@ export function mountRail(root, { paytable = [], extra = '' } = {}) {
     net.style.color = s.net > 0 ? 'var(--toxic)' : s.net < 0 ? 'var(--blood)' : '';
     el('stRtp').textContent = s.spins ? s.rtp.toFixed(2) + '%' : '—';
     el('stStreak').textContent = s.lossStreak;
+    const peek = el('statPeek');
+    if (peek) {
+      peek.textContent = s.spins ? `${s.net > 0 ? '+' : ''}${s.net.toFixed(2)} 💩` : 'nothing yet';
+      peek.style.color = s.net < 0 ? 'var(--blood)' : s.net > 0 ? 'var(--toxic)' : '';
+    }
   };
   paintStats();
 
@@ -157,6 +162,12 @@ export function mountRail(root, { paytable = [], extra = '' } = {}) {
   });
 
   bank.on((e) => { if (e.type === 'reset') { paintBet(); paintStats(); } });
+
+  // on a phone the rail opens closed — the only things that matter are the
+  // big button and the bet size
+  if (window.matchMedia('(max-width: 760px)').matches) {
+    root.querySelectorAll('.fold').forEach((d) => { d.open = false; });
+  }
 
   paintBet();
   return { paintStats, paintBet };
@@ -186,7 +197,7 @@ export function wireAutoplay(root, spin) {
   const stop = () => { clearTimeout(timer); timer = 0; };
   box.addEventListener('change', () => {
     if (box.checked) {
-      fanfare.toast('Autoplay engaged. You have automated your own decline. Efficient.', 'info', 5000);
+      fanfare.toast('Off we go. You have taught a robot to lose your money for you. Clever.', 'info', 5000);
       loop();
     } else stop();
   });

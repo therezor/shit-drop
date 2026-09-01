@@ -30,7 +30,7 @@ const HARD_CAP = 4.5;          // nobody rides past this
 chrome.mount({ active: 'flushpoint.html' });
 gameui.gameHeader(document.getElementById('ghead'), {
   em: '🚽', title: 'FLUSHPOINT',
-  sub: 'Cash out before the flush. The flush is 0.01 under wherever you click.',
+  sub: 'Grab your money before it flushes. It flushes just under wherever you click.',
 });
 
 const rail = document.getElementById('rail');
@@ -40,15 +40,15 @@ gameui.mountRail(rail, {
       <button class="btn btn--xl" id="btnGo">PLACE BET 🚽</button>
       <label class="autorow">
         <input type="checkbox" id="autoplay">
-        <span>GIVE UP AND LET US TAKE IT <span class="dim">(auto cash out at 2.00×)</span></span>
+        <span>GIVE UP AND LET US TAKE IT <span class="dim">(grabs it for you at 2.00×)</span></span>
       </label>
     </div></div>`,
   paytable: [
-    ['Cash out at 2.00×', 'x2', false],
-    ['Cash out at 5.00×', 'x5', true],
-    ['Cash out at 100×', 'x100', true],
-    ['Flushed', 'nothing', false],
-    ['Withdrawal fee', 'up to 99.9%', false],
+    ['Grab it at 2.00×', 'x2', false],
+    ['Grab it at 5.00×', 'x5', true],
+    ['Grab it at 100×', 'x100', true],
+    ['Too slow', 'nothing', false],
+    ['Our handling fee', 'up to 99.9%', false],
   ],
 });
 
@@ -81,7 +81,7 @@ function resetBowl() {
   el.bowl.classList.remove('flushing');
   el.mult.classList.remove('dead', 'danger');
   paintBowl(1);
-  el.lbl.textContent = 'place a bet';
+  el.lbl.textContent = 'press the button';
   el.mult.textContent = '1.00×';
 }
 resetBowl();
@@ -111,9 +111,9 @@ function start() {
   crashAt = crashPointFor(r);
   t0 = performance.now();
   gurgleAt = 0;
-  el.btn.textContent = 'CASH OUT 💰';
+  el.btn.textContent = 'GRAB IT 💰';
   el.btn.classList.add('btn--danger');
-  el.lbl.textContent = 'rising — cash out any time';
+  el.lbl.textContent = 'going up — grab it whenever you like';
   console.log(`[flushpoint] payout=${r.payout} backstop crash=${crashAt.toFixed(2)}`);
 
   const loop = (now) => {
@@ -164,7 +164,7 @@ async function flush(at, wasClicked) {
   el.mult.textContent = at.toFixed(2) + '×';
   el.mult.classList.add('dead');
   el.bowl.classList.add('flushing');
-  el.lbl.textContent = wasClicked ? 'flushed 0.01 under your click' : 'flushed';
+  el.lbl.textContent = wasClicked ? 'flushed just under your click' : 'flushed';
   sfx.flush();
 
   history.push({ m: at, cashed: false });
@@ -172,8 +172,8 @@ async function flush(at, wasClicked) {
 
   if (wasClicked) {
     fanfare.toast(
-      `<b>FLUSHED AT ${at.toFixed(2)}×</b> — you clicked at ${(at + 0.01).toFixed(2)}×. ` +
-      `So close. That is the point. It was never going to be anything else.`, 'loss', 7000);
+      `<b>FLUSHED AT ${at.toFixed(2)}×</b> — and you clicked at ${(at + 0.01).toFixed(2)}×. ` +
+      `So close! That is the whole trick. It was never going to be anything else.`, 'loss', 7000);
     round.tease();
   }
 
@@ -181,7 +181,7 @@ async function flush(at, wasClicked) {
   if (r.payout > 0) {
     console.log('[flushpoint] rode past the cap without cashing out — forfeit');
     Object.assign(r, { payout: 0, outcome: 'nothing', tier: null, ratio: 0, multiplierShown: 0, isRealWin: false });
-    fanfare.toast('You never cashed out. The bowl does not wait. Nothing paid.', 'loss', 6000);
+    fanfare.toast('You never grabbed it. The toilet does not wait. You get nothing.', 'loss', 6000);
   }
 
   await new Promise((res) => setTimeout(res, 1000));
@@ -195,7 +195,7 @@ async function cashOut(m) {
   cancelAnimationFrame(raf);
 
   paintBowl(m);
-  el.lbl.textContent = 'cashed out';
+  el.lbl.textContent = 'you got it';
   sfx.coins(14);
   history.push({ m, cashed: true });
   paintHistory();
@@ -205,9 +205,9 @@ async function cashOut(m) {
   const fee = expected - r.payout;
   if (fee > 0.02) {
     fanfare.toast(
-      `Cashed out at <b>${m.toFixed(2)}×</b> on a ${r.bet.toFixed(2)} stake ` +
-      `= ${expected.toFixed(2)} 💩.<br>Paid: <b>${r.payout.toFixed(2)} 💩</b>. ` +
-      `Withdrawal fee: <b>${((fee / expected) * 100).toFixed(1)}%</b>. Standard.`,
+      `You grabbed it at <b>${m.toFixed(2)}×</b>. You bet ${r.bet.toFixed(2)}, so that is ` +
+      `${expected.toFixed(2)} 💩.<br>We gave you <b>${r.payout.toFixed(2)} 💩</b>. ` +
+      `We kept <b>${((fee / expected) * 100).toFixed(1)}%</b> as a fee. Totally normal.`,
       'info', 8000);
   }
 
@@ -217,7 +217,7 @@ async function cashOut(m) {
 
 function finishUp() {
   state = 'idle';
-  el.btn.textContent = 'PLACE BET 🚽';
+  el.btn.textContent = 'START 🚽';
   el.btn.classList.remove('btn--danger');
   setTimeout(resetBowl, 600);
 
@@ -231,7 +231,7 @@ el.btn.addEventListener('click', () => {
 
 el.auto.addEventListener('change', () => {
   if (el.auto.checked) {
-    fanfare.toast('Auto cash out set to 2.00×. It will be honoured only on rounds that were going to pay anyway.', 'info', 6000);
+    fanfare.toast('The robot will grab it at 2.00× for you. It only works on goes that were going to pay anyway.', 'info', 6000);
     if (state === 'idle') start();
   }
 });

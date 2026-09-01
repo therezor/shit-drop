@@ -16,47 +16,47 @@ export const TROPHIES = [
     test: ({ stats }) => stats.spins >= 1 && stats.net < 0 },
 
   { id: 'nothing-burger', em: '🕳️', t: 'Nothing Burger',
-    d: 'Receive a payout of exactly 0.00 credits.',
+    d: 'Get back exactly nothing.',
     test: ({ last }) => last && last.payout === 0 },
 
   { id: 'the-crumb', em: '🍞', t: 'The Crumb',
-    d: 'Win under 0.10 credits on a stake of 50 or more.',
+    d: 'Bet 50 or more. Win less than 0.10.',
     test: ({ last }) => last && last.payout > 0 && last.payout < 0.1 && last.stake >= 50 },
 
   { id: 'down-bad', em: '📉', t: 'Down Bad',
-    d: 'Reach a lifetime net loss of 250 credits.',
+    d: 'Lose 250 credits in total.',
     test: ({ stats }) => stats.net <= -250 },
 
   { id: 'financially-illiterate', em: '🧠', t: 'Financially Illiterate',
-    d: 'Lose 10 rounds in a row.',
+    d: 'Lose 10 goes in a row.',
     test: ({ stats }) => stats.lossStreak >= 10 },
 
   { id: 'big-swinger', em: '🍆', t: 'Big Swinger',
-    d: 'Stake the maximum 500 credits in one round.',
+    d: 'Bet the full 500 on one go.',
     test: ({ last }) => last && last.stake >= 500 },
 
   { id: 'certified-idiot', em: '🏅', t: 'Certified Idiot',
-    d: 'Run out of credits entirely.',
+    d: 'Run out of money completely.',
     test: ({ stats }) => stats.busts >= 1 },
 
   { id: 'sunk-cost', em: '⚓', t: 'The Sunk Cost',
-    d: 'Play 100 rounds. Knowing all of this.',
+    d: 'Have 100 goes. Knowing all of this.',
     test: ({ stats }) => stats.spins >= 100 },
 
   { id: 'lucky-fool', em: '🍀', t: 'Lucky Fool',
-    d: 'Actually win a round on net. It happens.',
+    d: 'Actually come out ahead on one go.',
     test: ({ last }) => last && last.net > 0 },
 
   { id: 'gave-it-back', em: '🔁', t: 'Gave It Straight Back',
-    d: 'Win on net, then lose the very next round.',
+    d: 'Win, then lose it on the very next go.',
     test: ({ stats, last }) => last && last.net < 0 && stats.bestNet > 0 && stats.spins >= 2 && window.__sdWonLast === true },
 
   { id: 'beggar', em: '🥣', t: 'Professional Beggar',
-    d: 'Accept the pity handout three times.',
+    d: 'Take the sad little handout three times.',
     test: ({ state }) => state.pityTaken >= 3 },
 
   { id: 'vip-turd', em: '💎', t: 'VIP Diamond Turd',
-    d: 'Destroy 1,000 credits of fake money.',
+    d: 'Burn 1,000 credits of pretend money.',
     test: ({ stats }) => stats.lost >= 1000 },
 
   { id: 'all-tourists', em: '🎪', t: 'The Full Tour',
@@ -67,7 +67,7 @@ export const TROPHIES = [
     } },
 
   { id: 'masochist', em: '⛓️', t: 'Masochist',
-    d: 'Play 300 rounds. Please stop.',
+    d: 'Have 300 goes. Please stop.',
     test: ({ stats }) => stats.spins >= 300 },
 ];
 
@@ -80,7 +80,7 @@ export const VIP_TIERS = [
   { at: 2500, name: 'Sewer Baron' },
 ];
 
-/** VIP progress is measured in money LOST. Rewards: none. Stated openly. */
+/** The bar fills up with money LOST. There is no prize. We say so on the page. */
 export function vip() {
   const lost = bank.stats().lost;
   let i = 0;

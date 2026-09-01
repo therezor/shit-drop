@@ -16,13 +16,14 @@ import { pick } from './rig.js';
 let dom = null;
 
 const SUBS = {
-  'WIN': ['A win is a win. Technically. Legally.', 'Numbers went up. Briefly.'],
-  'BIG WIN': ['BIG! Well. Big-ish. Well.', 'Feel that? That is dopamine, not profit.'],
-  'MEGA WIN': ['MEGA! MASSIVE! MINUSCULE!', 'The sirens are proportional to nothing.'],
+  'WIN': ['A win is a win. Sort of. Not really.', 'A number went up. Then it went down.'],
+  'BIG WIN': ['BIG! Well. Big-ish. Well. No.', 'That nice feeling is not money.'],
+  'MEGA WIN': ['MEGA! HUGE! TINY!', 'The sirens are not linked to the prize.'],
   'JACKPOT': [
-    'THE BIG ONE!!! (it is not)',
-    'JACKPOT!!! Please read the small grey text.',
-    'HISTORIC PAYOUT. Genuinely historic. Look at it.',
+    'THE BIG ONE!!! (it is not the big one)',
+    'JACKPOT!!! Please read the little grey words.',
+    'THE BIGGEST WIN EVER. Look at it. Look closer.',
+    'INCREDIBLE!!! Now check your balance.',
   ],
 };
 
@@ -174,8 +175,8 @@ export function celebrate(r) {
   d.amt.innerHTML = '0.00 <small>💩</small>';
   d.sub.textContent = pick(SUBS[tier] || SUBS['WIN']);
   d.net.textContent = r.net < 0
-    ? `(net ${r.net.toFixed(2)} on a ${r.bet.toFixed(2)} stake · this was a loss)`
-    : `(net +${r.net.toFixed(2)} — enjoy it)`;
+    ? `(you bet ${r.bet.toFixed(2)} and lost ${Math.abs(r.net).toFixed(2)} · this was a loss)`
+    : `(you are up ${r.net.toFixed(2)} — enjoy it)`;
 
   d.ff.classList.add('on');
   document.body.classList.add('shake');

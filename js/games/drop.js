@@ -28,13 +28,15 @@ const ROWS = 10;
 const BUCKETS = ROWS + 1;                       // 11
 // Edges pay everything. In real plinko you never reach the edges.
 const MULT = [500, 2, 0.5, 0.1, 0.01, 0, 0.01, 0.1, 0.5, 2, 500];
-const LABEL = MULT.map((m, i) =>
-  m >= 500 ? 'JACKPOT' : m === 0 ? 'NOTHING' : 'x' + m);
+const LABEL = MULT.map((m) => (m >= 500 ? 'JACKPOT' : m === 0 ? 'NOTHING' : 'x' + m));
+// eleven words don't fit across a phone, so the buckets get symbols instead
+const LABEL_SHORT = MULT.map((m) =>
+  m >= 500 ? '💎' : m === 0 ? '✖' : String(m).replace(/^0/, ''));
 
 chrome.mount({ active: 'drop.html' });
 gameui.gameHeader(document.getElementById('ghead'), {
   em: '💩', title: 'SHIT DROP',
-  sub: 'Ten rows of pegs. Eleven buckets. One predetermined outcome.',
+  sub: 'Ten rows of pegs. Eleven buckets. One answer, picked before you click.',
 });
 
 const rail = document.getElementById('rail');
@@ -45,21 +47,29 @@ gameui.mountRail(rail, {
       ${gameui.AUTOPLAY_HTML}
     </div></div>`,
   paytable: [
-    ['JACKPOT (edge)', 'x500', true],
-    ['Second ring', 'x2', false],
-    ['Third ring', 'x0.50', false],
-    ['Fourth ring', 'x0.10', false],
-    ['Fifth ring', 'x0.01', false],
-    ['Centre', 'x0 — nothing', false],
+    ['Far left / far right', 'x500', true],
+    ['Next one in', 'x2', false],
+    ['Next one in', 'x0.50', false],
+    ['Next one in', 'x0.10', false],
+    ['Next one in', 'x0.01', false],
+    ['Middle', 'nothing', false],
   ],
 });
 
 /* ---------------- slot labels ---------------- */
 const slotsEl = document.getElementById('slots');
-slotsEl.innerHTML = LABEL.map((l, i) =>
-  `<div class="dropslot ${MULT[i] >= 500 ? 'jack' : MULT[i] === 0 ? 'nil' : ''}" data-i="${i}">${l}</div>`
+slotsEl.innerHTML = MULT.map((m, i) =>
+  `<div class="dropslot ${m >= 500 ? 'jack' : m === 0 ? 'nil' : ''}" data-i="${i}"></div>`
 ).join('');
 const slotEls = [...slotsEl.children];
+
+/** Swap to symbols when the board is too narrow for words. */
+function paintSlotLabels() {
+  const short = window.innerWidth <= 760;
+  slotEls.forEach((el, i) => { el.textContent = short ? LABEL_SHORT[i] : LABEL[i]; });
+}
+paintSlotLabels();
+window.addEventListener('resize', paintSlotLabels);
 
 /* ---------------- board geometry ---------------- */
 const cv = document.getElementById('cv');
@@ -70,16 +80,27 @@ const CX = W / 2;
 const PAD_TOP = 34;
 const ROW_H = (H - PAD_TOP - 26) / ROWS;
 
-// scale for crisp rendering
+// Crisp on retina, and never squashed: the backing store is fixed while the
+// CSS box is fluid. Only width is set — `height: auto` lets the canvas keep
+// its own 616:420 ratio, which an inline height would have broken.
 (function hidpi() {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   cv.width = W * dpr; cv.height = H * dpr;
-  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  cv.style.width = '100%';
+  cv.style.maxWidth = W + 'px';
+  cv.style.height = 'auto';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 })();
 
 const ux = (u) => CX + u * SP;
 const rowY = (r) => PAD_TOP + r * ROW_H;
+
+/* The canvas is 616 wide but CSS shrinks it to fit a phone, which shrinks the
+   pegs with it. This is how much bigger to draw everything to compensate. */
+let vs = 1;
+function measure() { vs = Math.max(1, W / (cv.clientWidth || W)); }
+measure();
+window.addEventListener('resize', measure);
 
 /** Peg row r holds r+1 pegs at u = -r/2 + k — the positions the turd can occupy. */
 function pegs() {
@@ -111,10 +132,10 @@ function draw() {
     const x = ux(p.u), y = rowY(p.r);
     const hot = ball && ball.hit === p.r && Math.abs(ball.u - p.u) < 0.3;
     ctx.beginPath();
-    ctx.arc(x, y, hot ? 5.4 : 3.6, 0, Math.PI * 2);
+    ctx.arc(x, y, (hot ? 5.4 : 3.6) * vs, 0, Math.PI * 2);
     ctx.fillStyle = hot ? '#fff6cf' : '#7f9c88';
     ctx.fill();
-    if (hot) { ctx.shadowColor = '#f5c518'; ctx.shadowBlur = 14; ctx.fill(); ctx.shadowBlur = 0; }
+    if (hot) { ctx.shadowColor = '#f5c518'; ctx.shadowBlur = 14 * vs; ctx.fill(); ctx.shadowBlur = 0; }
   }
 
   // bucket dividers
@@ -138,7 +159,7 @@ function draw() {
   glow.forEach((g, i) => {
     ctx.globalAlpha = (i / glow.length) * 0.34;
     ctx.beginPath();
-    ctx.arc(ux(g.u), g.y, 9, 0, Math.PI * 2);
+    ctx.arc(ux(g.u), g.y, 9 * vs, 0, Math.PI * 2);
     ctx.fillStyle = '#8a5a2b';
     ctx.fill();
     ctx.globalAlpha = 1;
@@ -149,7 +170,7 @@ function draw() {
     const x = ux(ball.u), y = ball.y;
     ctx.save();
     ctx.shadowColor = '#000'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 4;
-    ctx.font = '26px serif';
+    ctx.font = `${Math.round(26 * vs)}px serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('💩', x, y);
     ctx.restore();
@@ -324,7 +345,7 @@ async function drop() {
   const shown = MULT[landed];
   if (r.payout > 0 && Math.abs(shown * r.bet - r.payout) > 0.02 && rig.chance(0.4)) {
     setTimeout(() => fanfare.toast(
-      `You landed on <b>x${shown}</b> and were paid <b>${r.payout.toFixed(2)}</b>. The paytable is decorative.`,
+      `The bucket said <b>x${shown}</b>. We paid you <b>${r.payout.toFixed(2)}</b>. The buckets are just paint.`,
       'info', 5000), 400);
   }
 

@@ -167,6 +167,7 @@ a:hover { color: var(--gold-2); }
 }
 .hdr__nav a:hover { background: #ffffff0d; color: var(--gold-2); }
 .hdr__nav a.on { background: #ffffff14; color: var(--gold); }
+.nav-short { display: none; }              /* swapped in on phones */
 
 /* balance pill */
 .bal {
@@ -189,7 +190,10 @@ a:hover { color: var(--gold-2); }
 .bal__n.flash-up { animation: flashup .5s ease; }
 @keyframes flashdown { 0% { color: var(--blood); transform: scale(1.14) } 100% { color: var(--gold); transform: none } }
 @keyframes flashup   { 0% { color: var(--toxic); transform: scale(1.14) } 100% { color: var(--gold); transform: none } }
-.bal__lbl { font-size: 8.5px; letter-spacing: .12em; color: #8a7a60; text-transform: uppercase; }
+.bal__lbl { font-size: 8.5px; letter-spacing: .12em; color: #8a7a60; text-transform: uppercase; line-height: 1.15; }
+.bal__coin { font-size: 15px; }
+.bal__acts { display: flex; align-items: center; gap: 6px; }
+.bal__acts .btn { padding: 7px 10px; font-size: 10px; }
 
 /* ---------- buttons ---------- */
 .btn {
@@ -478,4 +482,108 @@ a:hover { color: var(--gold-2); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
+
+/* ============================================================
+   FOLDS — <details> panels. Open on a desktop, closed on a
+   phone, so the only things on screen are the big button and
+   the bet.
+   ============================================================ */
+.fold > summary {
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::after {
+  content: "▾";
+  font-size: 13px;
+  color: #7d6f5c;
+  transition: transform .2s;
+  margin-left: 4px;
+}
+.fold[open] > summary::after { transform: rotate(180deg); }
+.fold > summary:hover { background: #ffffff08; }
+.fold > summary:hover::after { color: var(--gold); }
+.fold__peek {
+  font-family: var(--mono); font-weight: 700; font-size: 12px;
+  letter-spacing: 0; text-transform: none; color: #7d6f5c;
+  margin-left: auto;
+}
+
+/* ============================================================
+   PHONES — bigger everything, fewer things.
+   ============================================================ */
+@media (max-width: 760px) {
+  /* the fake winners ticker is the most skippable thing here */
+  .ticker { display: none; }
+
+  .bonusbar { font-size: 11.5px; padding: 8px 12px; gap: 8px; }
+  .bonusbar__cta { font-size: 9.5px; padding: 4px 8px; }
+
+  .hdr__in { padding: 10px 14px; gap: 10px; row-gap: 10px; }
+  .logo__badge { width: 38px; height: 38px; font-size: 21px; }
+  .logo__name { font-size: 22px; }
+  .logo__tm { display: none; }
+
+  /* the balance gets its own block: the number on one line, the buttons under it */
+  .bal {
+    order: 2; width: 100%; margin-left: 0;
+    flex-wrap: wrap; row-gap: 9px;
+    padding: 11px 12px;
+    border-radius: 14px;
+  }
+  .bal__lbl { font-size: 9.5px; }
+  .bal__n {
+    font-size: 27px; min-width: 0;
+    flex: 1 1 auto; text-align: right;
+  }
+  .bal__coin { font-size: 20px; }
+  .bal__acts { flex: 1 1 100%; }
+  .bal__acts .btn { flex: 1; padding: 13px 10px; font-size: 12px; white-space: nowrap; }
+  .mutebtn { width: 44px; height: 44px; font-size: 17px; }
+
+  /* short nav labels, so all five fit without swiping */
+  .nav-long { display: none; }
+  .nav-short { display: inline; }
+
+  /* nav becomes one swipeable row */
+  .hdr__nav {
+    order: 3; width: 100%;
+    flex-wrap: nowrap; overflow-x: auto;
+    gap: 4px; margin: 0; padding-bottom: 2px;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .hdr__nav::-webkit-scrollbar { display: none; }
+  .hdr__nav a { font-size: 12px; padding: 10px 12px; flex: none; }
+
+  /* buttons and inputs sized for thumbs */
+  .btn { padding: 15px 22px; font-size: 14px; }
+  .btn--xl { width: 100%; font-size: 19px; padding: 21px 24px; }
+  .panel__bd { padding: 14px; }
+  .panel__hd { padding: 14px 15px; font-size: 11.5px; }
+
+  /* Toasts sit across the bottom, right on top of the big button. So they
+     stop catching taps — the button underneath still works. */
+  #toasts { left: 12px; right: 12px; bottom: 12px; max-width: none; }
+  .toast { font-size: 14px; padding: 13px 15px; pointer-events: none; }
+  .toast:nth-last-child(n+3) { display: none; }
+
+  #cookies { left: 10px; right: 10px; bottom: 10px; width: auto; }
+
+  .ftr { padding: 26px 16px 34px; font-size: 12px; }
+  .ftr__logos { gap: 6px; }
+
+  /* a folded panel just needs its name and its number */
+  .panel__hd { flex-wrap: wrap; }
+  .fold > summary .dim { display: none; }
+  .fold > summary { padding: 15px; font-size: 12px; }
+
+  .ff__hint { font-size: 11px; }
+  .ff__net { font-size: 9.5px; }
+}
+
+@media (max-width: 420px) {
+  .hdr__nav a { font-size: 11px; padding: 9px 10px; }
+  .bal__n { font-size: 20px; }
 }

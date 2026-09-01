@@ -65,6 +65,11 @@ document.getElementById('quotes').innerHTML = taunt.QUOTES.map((q) => `
     <div class="quote__who"><b>${q.who}</b> · ${q.sub}</div>
   </div>`).join('');
 
+/* ---- on a phone, the decoration starts folded away ---- */
+if (window.matchMedia('(max-width: 760px)').matches) {
+  document.querySelectorAll('.fold').forEach((d) => { d.open = false; });
+}
+
 /* ---- first visit ---- */
 if (store.once('welcome')) {
   setTimeout(() => {

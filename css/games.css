@@ -289,7 +289,9 @@
 
 /* ---- SLOTS ---- */
 .reels {
-  display: flex; gap: 10px;
+  /* one variable drives the whole machine: cells are square, a reel is 3 tall */
+  --cell: clamp(74px, 26vw, 110px);
+  display: flex; gap: 10px; max-width: 100%;
   padding: 14px;
   background: linear-gradient(180deg, #0a0705, #17110b);
   border: 3px solid var(--gold-dim);
@@ -298,17 +300,18 @@
 }
 .reel {
   position: relative; overflow: hidden;
-  width: clamp(66px, 19vw, 96px);
-  height: clamp(198px, 57vw, 288px);
+  flex: 1 1 0; min-width: 0;
+  width: var(--cell);
+  height: calc(var(--cell) * 3);
   background: linear-gradient(180deg, #241a10, #0d0a07 20%, #0d0a07 80%, #241a10);
   border-radius: 9px;
   border: 1px solid #2f2415;
 }
 .reel__strip { position: absolute; left: 0; right: 0; top: 0; will-change: transform; }
 .reel__cell {
-  height: clamp(66px, 19vw, 96px);
+  height: var(--cell);
   display: grid; place-items: center;
-  font-size: clamp(34px, 10vw, 50px);
+  font-size: calc(var(--cell) * 0.52);
   line-height: 1;
   filter: drop-shadow(0 4px 6px #0008);
 }
@@ -457,3 +460,53 @@
   flex: none;
 }
 .mutebtn:hover { color: var(--gold-2); border-color: var(--gold-dim); }
+
+/* ============================================================
+   PHONES — scale the games up, strip the surroundings back.
+   ============================================================ */
+@media (max-width: 760px) {
+  .hero { padding: 34px 14px 26px; }
+  .hero__turd { font-size: clamp(66px, 22vw, 108px); }
+  .hero__slogan { font-size: 16.5px; margin-top: 13px; }
+  .hero__stats { gap: 0; margin-top: 24px; }
+  .hstat { flex: 1 1 50%; }
+  .hstat--extra { display: none; }        /* two numbers is plenty */
+  .hstat__n { font-size: 26px; }
+
+  .section { margin-top: 30px; }
+  .section__h h2 { font-size: 23px; }
+  .cards { grid-template-columns: 1fr; gap: 13px; }
+  .card { padding: 20px 18px 18px; }
+  .card__em { font-size: 46px; }
+  .card__t { font-size: 23px; }
+  .card__d { font-size: 14px; min-height: 0; }
+
+  .game { gap: 14px; margin-top: 16px; }
+  .gtitle { padding-top: 18px; gap: 11px; }
+  .gtitle__em { font-size: 36px; }
+  .gtitle__sub { font-size: 13.5px; }
+
+  .stage { min-height: 0; padding: 12px 8px 14px; border-radius: 12px; }
+  /* both of these repeat what the prize list already says */
+  .stage__title, .stage__rtp { display: none; }
+
+  /* the games themselves, larger */
+  .reels { padding: 9px; gap: 6px; border-width: 2px; width: 100%; }
+  .wheelbox { width: min(430px, 92vw); }
+  .fp__bowl { width: min(310px, 80vw); height: min(224px, 58vw); }
+  .fp__mult { font-size: clamp(56px, 19vw, 104px); }
+  .dropslot { font-size: 7.5px; padding: 6px 0; }
+
+  .betrow input { font-size: 25px; padding: 13px 14px; }
+  .betrow button { width: 50px; font-size: 20px; }
+  .chip { font-size: 14px; padding: 10px 14px; }
+  .chips { gap: 7px; }
+  .autorow { font-size: 13px; padding: 4px 0; }
+  .autorow input[type=checkbox] { width: 20px; height: 20px; }
+  .statlist div { padding: 11px 13px; font-size: 13px; }
+  .log { max-height: 230px; font-size: 13px; }
+  .log__row { padding: 8px 13px; }
+  .trophies { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .trophy { padding: 10px; }
+  .quotes { grid-template-columns: 1fr; }
+}

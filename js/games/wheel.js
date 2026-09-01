@@ -68,7 +68,7 @@ const TWOS   = idxOf((s) => s.m === 2);
 chrome.mount({ active: 'wheel.html' });
 gameui.gameHeader(document.getElementById('ghead'), {
   em: '🎡', title: 'WHEEL OF MISFORTUNE',
-  sub: 'The pointer will enter the JACKPOT. It will not stay there.',
+  sub: 'The arrow will go into the JACKPOT. It will not stay there.',
 });
 
 const rail = document.getElementById('rail');
@@ -79,13 +79,13 @@ gameui.mountRail(rail, {
       ${gameui.AUTOPLAY_HTML}
     </div></div>`,
   paytable: [
-    ['JACKPOT ×1 segment', 'x500', true],
-    ['x2 ×2 segments', 'x2', false],
-    ['x1 ×2 segments', 'x1', false],
-    ['x0.10 ×3 segments', 'x0.10', false],
-    ['x0.01 ×6 segments', 'x0.01', false],
-    ['MOCK / NOTHING ×8', 'nothing', false],
-    ['LOSE ALL ×2 segments', 'everything', false],
+    ['JACKPOT — 1 slice', 'x500', true],
+    ['x2 — 2 slices', 'x2', false],
+    ['x1 — 2 slices', 'x1', false],
+    ['x0.10 — 3 slices', 'x0.10', false],
+    ['x0.01 — 6 slices', 'x0.01', false],
+    ['Laughing at you — 8 slices', 'nothing', false],
+    ['LOSE ALL — 2 slices', 'everything', false],
   ],
 });
 
@@ -212,7 +212,7 @@ async function spin() {
     await hold(260);
     sfx.thud();
     if (parked.t === 'jack') {
-      fanfare.toast('The pointer is <b>in the JACKPOT</b>. Hold your breath.', 'info', 2600);
+      fanfare.toast('The arrow is <b>in the JACKPOT</b>. Hold your breath.', 'info', 2600);
       sfx.siren(2);
     }
     await hold(520);                        // let them believe it
@@ -236,12 +236,12 @@ async function spin() {
     fanfare.lossStamp('WIPED');
     sfx.flush();
     fanfare.toast(
-      `<b>LOSE ALL.</b> ${had.toFixed(2)} credits removed. Two of the twenty-four segments do this ` +
-      `and they are clearly labelled, which is more warning than you get anywhere else.`, 'loss', 9000);
+      `<b>LOSE ALL.</b> We took your ${had.toFixed(2)} credits. Two of the twenty-four slices do ` +
+      `this, and they say so in big letters. That is more warning than you get anywhere else.`, 'loss', 9000);
   } else {
     if (landed.m && Math.abs(landed.m * r.bet - r.payout) > 0.02 && rig.chance(0.35)) {
       setTimeout(() => fanfare.toast(
-        `Landed on <b>${landed.l}</b>, paid <b>${r.payout.toFixed(2)}</b>. The wheel is decorative.`,
+        `The wheel said <b>${landed.l}</b>. We paid <b>${r.payout.toFixed(2)}</b>. The wheel is a wheel, not a promise.`,
         'info', 5000), 400);
     }
     await round.finish(r);

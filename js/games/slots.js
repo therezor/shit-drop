@@ -30,7 +30,7 @@ const ALL  = [...LOW, ...MID, JACK];
 chrome.mount({ active: 'slots.html' });
 gameui.gameHeader(document.getElementById('ghead'), {
   em: '🎰', title: 'SHIT SLOTS',
-  sub: 'Two diamonds, guaranteed. The third one is not for you.',
+  sub: 'Two diamonds every time. The third one is not for you.',
 });
 
 const rail = document.getElementById('rail');
@@ -44,9 +44,9 @@ gameui.mountRail(rail, {
     ['💎 💎 💎', 'x500', true],
     ['💀 💀 💀', 'x50', true],
     ['🚽 🚽 🚽', 'x10', true],
-    ['Any three alike', 'x1', false],
-    ['Any two alike', 'x0.05', false],
-    ['💎 💎 — (so close)', 'x0.01', false],
+    ['Any three the same', 'x1', false],
+    ['Any two the same', 'x0.05', false],
+    ['💎 💎 and then nothing', 'x0.01', false],
   ],
 });
 

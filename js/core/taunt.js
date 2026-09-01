@@ -10,15 +10,16 @@ import { pick, chance } from './rig.js';
 
 export const SLOGANS = [
   "You'll never win.™",
-  'The house always wins. You just always lose.',
-  'Certified 7.31% payout — the most honest casino online.',
-  'Where your money goes to die.',
-  "97% of our players quit before they get lucky. Don't be like them. Be worse.",
-  'Every game is rigged. We just admit it.',
-  'Turning disposable income into disposable dignity since right now.',
-  'Statistically, you have already lost. Emotionally, too.',
-  'We took your money before you clicked. This is a formality.',
-  'The only drop is your net worth.',
+  'The house always wins. You just lose. Every time. Forever.',
+  'We keep 93p of every pound. The other 7p is also ours, later.',
+  'Money goes in. Nothing comes out. That is the whole game.',
+  'Like a toilet, but for money.',
+  'Come for the flashing lights. Leave with nothing.',
+  'You have already lost. You just have not clicked yet.',
+  'Big loud noises. Small sad numbers.',
+  'Free to play. Impossible to win.',
+  'The most honest casino online. That is a very low bar.',
+  'Four games. All broken on purpose. Have fun.',
 ];
 
 /* ---------------- losses ---------------- */
@@ -72,33 +73,33 @@ const HUGE = [
 /* ---------------- loss streaks ---------------- */
 
 const STREAK = {
-  3:  'Three in a row. A pattern is emerging and it is called "you".',
-  5:  'Five losses. At this point it is a lifestyle.',
-  7:  'Seven straight. The machine is not broken. You are.',
-  10: 'TEN IN A ROW. Ten. We did not even have to try.',
-  13: 'Thirteen. Unlucky? No. Working as designed.',
-  15: 'Fifteen losses. Genuinely, how are you still here?',
-  20: 'Twenty. TWENTY. You are the reason this website is profitable.',
-  25: 'Twenty-five in a row. You have become the house edge.',
-  30: 'Thirty. We have stopped laughing. This is just sad now. Continue.',
-  40: 'Forty consecutive losses. You are not a gambler, you are a subscription.',
-  50: 'Fifty. You have lost fifty times in a row. Please seek a hobby. Or bet more.',
+  3:  'Three in a row. A pattern is starting and it is called "you".',
+  5:  'Five losses. This is a hobby now.',
+  7:  'Seven in a row. The machine is not broken. You are.',
+  10: 'TEN IN A ROW. Ten. We did not even try hard.',
+  13: 'Thirteen. Unlucky? No. Working exactly right.',
+  15: 'Fifteen losses. How are you still here?',
+  20: 'Twenty. TWENTY. You are why this website is rich.',
+  25: 'Twenty-five in a row. You are not playing. You are feeding.',
+  30: 'Thirty. We stopped laughing. This is just sad. Carry on.',
+  40: 'Forty in a row. You are not a player, you are a monthly payment.',
+  50: 'Fifty losses in a row. Please get a hobby. Or bet more.',
 };
 
 /* ---------------- "wins" (i.e. smaller losses) ---------------- */
 
 // payout > 0 but you still lost money. The core gag.
 const FAKE_WIN = [
-  'YOU WON! (You lost {loss} credits.)',
-  'BIG WINNER!!! Net result: down {loss}. Enjoy!',
-  "That's a win! In the sense that a number went up. Briefly.",
-  'Look at that payout! Now look at your balance. Now cry.',
-  'Winner winner! You are {loss} credits poorer. Celebrate.',
-  'A win! Statistically. Legally. Not financially.',
-  'We are legally allowed to call that a win, so: WIN!',
-  'You got {payout} back out of {bet}. This is what winning feels like here.',
-  'HUGE WIN! Down {loss} overall, but let us have this moment.',
+  'YOU WON! You also lost {loss} credits. Both are true.',
+  'BIG WINNER!!! You are {loss} credits poorer. Well done!',
+  'A win! A number went up for one second. Then it went down.',
+  'Look at that prize! Now look at your money. Now cry.',
+  'You put in {bet}. You got back {payout}. That is a win here.',
+  'We are allowed to call that a win, so: WIN!',
+  'HUGE WIN! Down {loss}. But let us enjoy this together.',
   'The sirens went off, so it must have been good. It was not.',
+  'Winner! Of {payout} credits. Out of the {bet} you gave us.',
+  'You won! Please do not check your balance.',
 ];
 
 // genuine net-positive win
@@ -127,10 +128,10 @@ const BET_UP = [
 
 const BET_DOWN = [
   'Pussy.',
-  'Scared? You should be. Still, pathetic.',
-  'Lowering your bet does not lower your odds. Nice try, coward.',
-  'Oh, playing it safe. Adorable.',
-  'That is the bet of a man who checks his bank app.',
+  'Scared? Good. Still pathetic.',
+  'A smaller bet does not help you. Nice try, coward.',
+  'Oh, being careful. Sweet.',
+  'That is the bet of someone who checks their bank app.',
 ];
 
 const BUST = [
@@ -141,29 +142,31 @@ const BUST = [
 ];
 
 const PITY = [
-  'Here is 5 credits. It is not a kindness, it is a fishing hook.',
+  'Here is 5 credits. It is not a gift. It is a hook.',
   '5 whole credits. Go on. Lose them too.',
-  'A pity handout. Take it and be ashamed.',
-  'We are giving you 5 credits because a player at zero cannot lose any more.',
+  'Take the sad little handout. Take it.',
+  'We gave you 5 credits because a player with nothing cannot lose anything.',
 ];
 
 const NEAR_MISS = [
-  'SO close. That is not an accident.',
-  'Almost! By design. Every time.',
-  'One symbol off. Engineered to feel like your fault.',
+  'SO close! We made it do that.',
+  'Almost! We make it almost every time.',
+  'One off. It is meant to feel like your fault.',
   'You nearly had it. You never had it.',
-  'That near miss was chosen for you before you clicked.',
+  'We picked that near miss for you before you clicked.',
+  'That was not bad luck. That was a setting.',
 ];
 
 const WITHDRAW = [
-  'Withdrawals require a minimum balance of 1,000,000 credits. Keep going!',
-  'Withdraw? Ha. Ha ha. No.',
-  'Our withdrawal team is on holiday. Permanently.',
+  'You need 1,000,000 credits to take money out. Keep going!',
+  'Take money out? Ha. Ha ha. No.',
+  'The man with the money key is on holiday. Forever.',
+  'Money only goes one way here. In.',
 ];
 
 const MUTE = [
-  'Muting the farts will not mute the losses.',
-  'Oh, the sounds were the problem? Not the gambling? Okay.',
+  'Turning off the farts will not turn off the losing.',
+  'Oh, the noises were the problem. Not the money. Okay.',
 ];
 
 /* ---------------- fake social proof ---------------- */

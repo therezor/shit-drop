@@ -18,12 +18,13 @@ import * as store from './store.js';
 /** games/*.html needs to climb one level for shared assets. */
 export const BASE = location.pathname.includes('/games/') ? '../' : './';
 
+// [long label, href, short label for phones]
 const NAV = [
-  ['Lobby', 'index.html'],
-  ['Shit Drop', 'games/drop.html'],
-  ['Shit Slots', 'games/slots.html'],
-  ['Flushpoint', 'games/flushpoint.html'],
-  ['Wheel', 'games/wheel.html'],
+  ['Lobby', 'index.html', 'Lobby'],
+  ['Shit Drop', 'games/drop.html', 'Drop'],
+  ['Shit Slots', 'games/slots.html', 'Slots'],
+  ['Flushpoint', 'games/flushpoint.html', 'Flush'],
+  ['Wheel', 'games/wheel.html', 'Wheel'],
 ];
 
 /* ---------------- ticker ---------------- */
@@ -51,7 +52,7 @@ function startBonusTimer(el) {
     if (left < 0) {
       left = 299;                                  // it never actually expires
       if (store.once('bonus-reset-seen')) {
-        fanfare.toast('Your expiring bonus has been generously extended. It will expire again shortly. Forever.', 'info');
+        fanfare.toast('Good news! Your bonus has been extended. It will run out again very soon. Forever.', 'info');
       }
     }
     const m = Math.floor(left / 60);
@@ -95,8 +96,8 @@ function modal(id, title, bodyHTML, footHTML = '') {
 
 function buildCashier() {
   const body = `
-    <p><b>Top up your balance instantly.</b> Choose a payment method below. We accept
-    almost anything, because none of it is real and neither is your balance.</p>
+    <p><b>Add more money. Right now. Quickly.</b> Pick how you want to pay. We take almost
+    anything, because none of it is real and neither is your balance.</p>
     <ul class="paylist">
       ${METHODS.map((m, i) => `
         <li><button data-pay="${i}">
@@ -105,9 +106,9 @@ function buildCashier() {
         </button></li>`).join('')}
     </ul>
     <p class="fineprint">
-      No card fields. No crypto address. No payment of any kind is possible on this website —
-      this cashier is part of the joke. Every "credit" is a number in your own browser.
-      Whatever you pick below, you get 5 pity credits and a fart.
+      There are no card boxes here. There is no crypto address. You cannot pay us anything,
+      because this whole shop is a joke. Your credits are a made-up number that lives in your
+      own browser. Pick anything above and you get 5 sad credits and a fart.
     </p>`;
   const m = modal('mCashier', '💳 Cashier', body);
   m.addEventListener('click', (e) => {
@@ -117,7 +118,7 @@ function buildCashier() {
     bank.pity();
     sfx.fart(3);
     m.classList.remove('on');
-    fanfare.toast(`Payment accepted: <b>${meth[1]}</b>. Balance credited with 5 (five) credits. ${taunt.pityLine()}`, 'info', 7000);
+    fanfare.toast(`We took your <b>${meth[1]}</b>. Here is 5 credits. Five. ${taunt.pityLine()}`, 'info', 7000);
   });
   return m;
 }
@@ -126,14 +127,14 @@ function buildResponsible() {
   const body = `
     <p><b>Please gamble responsibly.</b></p>
     <p style="font-size:13px">Ha.</p>
-    <p>Anyway — here are 5 free credits. Statistically you will give them back within
-      ninety seconds, which is the actual business model of every website that has ever
-      shown you this message.</p>
+    <p>Anyway — here are 5 free credits. You will give them straight back. That is why this
+      button exists. Every website that shows you this message also wants you to keep playing.</p>
     <p class="fineprint">
-      Genuinely, though: this site is a parody. If real gambling has stopped being fun for you,
-      that feeling is the product working as designed. In the UK, GamCare is on 0808 8020 133,
-      and <a href="https://www.begambleaware.org" target="_blank" rel="noopener">BeGambleAware.org</a>
-      exists. Elsewhere, your local equivalent does too. That part isn't a joke.
+      Now the real bit. This site is a joke, but the tricks in it are not. If real gambling has
+      stopped being fun for you, that is the machine doing its job, not you being weak.
+      In the UK: GamCare, 0808 8020 133, and
+      <a href="https://www.begambleaware.org" target="_blank" rel="noopener">BeGambleAware.org</a>.
+      Other countries have the same thing. This paragraph is not a joke.
     </p>`;
   const m = modal('mResponsible', '🛟 Responsible Gambling', body,
     '<button class="btn" data-take>Take the 5 credits</button>');
@@ -142,28 +143,28 @@ function buildResponsible() {
     bank.pity();
     sfx.partyHorn();
     m.classList.remove('on');
-    fanfare.toast('5 credits deposited. Enjoy your responsible gambling.', 'info');
+    fanfare.toast('5 credits added. Enjoy your responsible gambling.', 'info');
   });
   return m;
 }
 
 function buildFairness() {
   const body = `
-    <p><b>Provably Unfair™ Gaming</b></p>
-    <p>Our games use a certified pseudo-random number generator, audited by nobody,
-      whose output is then <i>ignored</i> in favour of a predetermined result.</p>
+    <p><b>Is this fair?</b></p>
+    <p style="font-size:15px">No.</p>
+    <p>Every game is decided before you press the button. Then the pictures move around for a
+      while to make it feel like a game.</p>
     <div class="statlist" style="margin:14px 0">
-      <div><span>Advertised RTP</span><span>7.31%</span></div>
-      <div><span>Actual RTP</span><span>7.31%</span></div>
-      <div><span>Chance a round pays nothing</span><span>~62%</span></div>
-      <div><span>Chance a "win" is still a net loss</span><span>~93%</span></div>
-      <div><span>Near-misses that were engineered</span><span>all of them</span></div>
-      <div><span>House edge</span><span>92.69%</span></div>
+      <div><span>Money we say you get back</span><span>7.31%</span></div>
+      <div><span>Money you actually get back</span><span>7.31%</span></div>
+      <div><span>Goes that give you nothing</span><span>62 in 100</span></div>
+      <div><span>"Wins" that still lose you money</span><span>93 in 100</span></div>
+      <div><span>Near misses we did on purpose</span><span>all of them</span></div>
+      <div><span>Money we keep</span><span>92.69%</span></div>
     </div>
-    <p class="fineprint">This table is accurate. Read <code>js/core/rig.js</code> —
-      the source is public. Real operators publish a 96% RTP and never publish the
-      near-miss logic, which is the part that keeps you here.</p>`;
-  return modal('mFair', '⚖️ Fairness', body);
+    <p class="fineprint">Those numbers are true. A real casino says you get back 96% and never
+      tells you about the near misses. The near misses are the bit that keeps you here.</p>`;
+  return modal('mFair', '⚖️ Is this fair?', body);
 }
 
 /* ---------------- cookie banner ---------------- */
@@ -174,8 +175,8 @@ function buildCookies() {
   if (bank.s().cookiesAck) el.classList.add('gone');
   el.innerHTML = `
     <h4>🍪 We value your privacy</h4>
-    <div>We and 1,847 carefully selected partners store cookies to personalise the
-      exact moment you are most likely to lose control. Legitimate interest.</div>
+    <div>We and 1,847 hand-picked friends save cookies so we can work out the exact moment
+      you are most likely to lose control. This is called legitimate interest.</div>
     <div class="row">
       <button class="btn" id="cookieAccept">Accept all</button>
       <button class="btn btn--ghost" id="cookieReject">Reject all</button>
@@ -198,7 +199,7 @@ function buildCookies() {
   reject.addEventListener('click', () => {
     store.patch({ cookiesAck: true });
     el.classList.add('gone');
-    fanfare.toast('Preferences saved: <b>Accept all</b>. Thank you for rejecting all.', 'info');
+    fanfare.toast('Saved! We picked <b>Accept all</b> for you. Thanks for rejecting all.', 'info');
     sfx.fart(2);
   });
   el.querySelector('#cookieAccept').addEventListener('click', () => {
@@ -212,14 +213,15 @@ function buildCookies() {
 /* ---------------- header ---------------- */
 
 function headerHTML(active) {
-  const nav = NAV.map(([label, href]) => {
-    const on = active && href.endsWith(active) ? ' class="on"' : '';
-    return `<a href="${BASE}${href}"${on}>${label}</a>`;
+  const nav = NAV.map(([label, href, short]) => {
+    const on = active && href.endsWith(active) ? ' on' : '';
+    return `<a class="navlink${on}" href="${BASE}${href}">` +
+           `<span class="nav-long">${label}</span><span class="nav-short">${short}</span></a>`;
   }).join('');
 
   return `
     <div class="bonusbar">
-      <span>🔥 <b>WELCOME BONUS</b> 200% up to 10,000 💩 — expires in</span>
+      <span>🔥 <b>FREE MONEY</b> 200% up to 10,000 💩 — gone in</span>
       <span class="bonusbar__t" id="bonusTimer">4:59</span>
       <span class="bonusbar__cta" id="bonusCta">CLAIM NOW</span>
     </div>
@@ -234,45 +236,45 @@ function headerHTML(active) {
         </a>
         <nav class="hdr__nav">${nav}</nav>
         <div class="bal">
-          <span class="bal__lbl">Balance</span>
+          <span class="bal__lbl">Your money</span>
           <span class="bal__n" id="balN">0.00</span>
-          <span style="font-size:15px">💩</span>
-          <button class="btn" id="btnDeposit" style="padding:7px 10px;font-size:10px">Deposit</button>
-          <button class="btn btn--ghost btn--dead" id="btnWithdraw"
-            style="padding:7px 10px;font-size:10px"
-            title="Minimum withdrawal: 1,000,000 💩">Withdraw</button>
-          <button class="mutebtn" id="btnMute" title="Mute the farts">🔊</button>
+          <span class="bal__coin">💩</span>
+          <span class="bal__acts">
+            <button class="btn" id="btnDeposit">Deposit</button>
+            <button class="btn btn--ghost btn--dead" id="btnWithdraw"
+              title="You need 1,000,000 💩 to take money out">Take out</button>
+            <button class="mutebtn" id="btnMute" title="Mute the farts">🔊</button>
+          </span>
         </div>
       </div>
     </header>`;
 }
 
 function footerHTML() {
-  const badges = ['eCOGRA — unaudited', 'Curaçao — never heard of her', 'GamStop — blocked us',
-    '18+ (we do not check)', 'SSL — probably', 'RNG — decorative'];
+  const badges = ['Checked by nobody', 'Curaçao — never heard of her', 'Banned by GamStop',
+    '18+ (we do not check)', 'Padlock icon — for looks', 'Random numbers — ignored'];
   return `
     <footer class="ftr">
       <div class="ftr__in">
         <div class="ftr__logos">${badges.map((b) => `<span class="ftr__logo">${b}</span>`).join('')}</div>
         <div class="ftr__legal">
-          <p><b>SHIT DROP</b> is operated by Absolutely Nobody Ltd, registered at an address
-          that does not exist, and licensed by no authority in any jurisdiction. Regulated by
-          vibes. Curaçao? Never heard of her. 18+ (or younger, we genuinely do not care).
-          Gamble irresponsibly.</p>
-          <p>All games have a house edge of 92.69%. Winnings cannot be withdrawn, transferred,
-          exchanged, enjoyed, or proven. Terms and conditions are made up as we go.
-          By reading this you consent to being mocked.
-          <a href="#" data-open="mFair">Fairness</a> ·
+          <p><b>SHIT DROP</b> is run by Absolutely Nobody Ltd, from an address that does not
+          exist, with a licence from nobody at all. We are not checked by anyone. Curaçao?
+          Never heard of her. 18+, or younger, we truly do not care. Gamble badly.</p>
+          <p>We keep 92.69% of everything. Your winnings cannot be taken out, sent anywhere,
+          swapped, spent, or proven to exist. The rules are made up as we go along.
+          By reading this you agree to be laughed at.
+          <a href="#" data-open="mFair">Is this fair?</a> ·
           <a href="#" data-open="mResponsible">Responsible Gambling</a> ·
           <a href="#" data-open="mCashier">Cashier</a> ·
           <a href="#" id="btnReset">Reset my account</a> ·
           <a href="https://github.com/therezor/shit-drop" target="_blank" rel="noopener">Source</a></p>
         </div>
         <div class="ftr__sat">
-          <b>This is satire.</b> No real money, payments, or accounts exist here — the credits
-          are a number in your browser's localStorage and the cashier accepts nothing. The odds
-          are printed honestly in <code>js/core/rig.js</code>, which is the only difference
-          between this site and the real ones.
+          <b>This is a joke website.</b> There is no real money in it. You cannot put money in
+          and you cannot take money out. Your credits are a made-up number saved in your own
+          browser, and the shop only takes things like your kidney. We print the real odds on
+          the screen, which is the only thing that makes this different from a real one.
           <b>If real gambling has stopped being a choice for you:</b>
           <a href="https://www.begambleaware.org" target="_blank" rel="noopener">BeGambleAware.org</a>,
           or GamCare on 0808 8020 133 in the UK.
@@ -348,7 +350,7 @@ export function mount({ active = '' } = {}) {
       e.preventDefault();
       bank.reset();
       sfx.flush();
-      fanfare.toast('Account wiped. Fresh 1,000 credits. The only winning move, and you will not take it.', 'info');
+      fanfare.toast('All gone. Here is 1,000 fresh credits. Walking away now is the only way to win, and you will not do it.', 'info');
       setTimeout(() => location.reload(), 1400);
     }
   });
