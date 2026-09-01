@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>persistence</title>
+<style>body{background:#111;color:#0f0;font:12px monospace}iframe{width:1200px;height:800px}</style>
+</head><body><pre id="out">…</pre><div id="frames"></div>
+<script type="module">
+const KEY = 'shitdrop.state.v1';
+const out = document.getElementById('out');
+const lines = []; const say = (m) => { lines.push(m); out.textContent = lines.join('\n'); };
+let fails = 0; const ok = (c, m) => { if (!c) fails++; say(`${c ? 'PASS' : '**FAIL**'}  ${m}`); };
+const st = () => JSON.parse(localStorage.getItem(KEY) || '{}');
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const errs = [];
+
+localStorage.setItem(KEY, JSON.stringify({ credits: 1000, bet: 10, muted: true, cookiesAck: true, seen: { welcome: 1 } }));
+
+function load(url) {
+  return new Promise((res) => {
+    const f = document.createElement('iframe');
+    f.src = url;
+    f.onload = () => { f.contentWindow.addEventListener('error', (e) => errs.push(url + ': ' + e.message)); setTimeout(() => res(f), 400); };
+    document.getElementById('frames').appendChild(f);
+  });
+}
+function play(f, sel) {
+  const w = f.contentWindow, d = f.contentDocument;
+  return new Promise((res) => {
+    const to = setTimeout(() => res({ timeout: true }), 25000);
+    w.addEventListener('sd:round', (e) => { clearTimeout(to); setTimeout(() => res(e.detail), 120); }, { once: true });
+    d.querySelector(sel).click();
+  });
+}
+
+say('=== three consecutive rounds on one page ===');
+let f = await load('../games/drop.html?rig=nothing');
+for (let i = 1; i <= 3; i++) {
+  const r = await play(f, '#btnDrop');
+  say(`  round ${i}: ${r.timeout ? '**TIMED OUT**' : `bet=${r.bet} payout=${r.payout} credits=${r.credits}`}  (state spins=${st().spins})`);
+}
+const mid = st();
+ok(mid.spins === 3, `three rounds accumulated (spins=${mid.spins})`);
+ok(mid.lossStreak === 3, `loss streak accumulated (${mid.lossStreak})`);
+ok(Math.abs(mid.credits - 970) < 0.005, `credits down exactly 3 × 10 (${mid.credits})`);
+f.remove();
+
+say('');
+say('=== state survives navigating to another game ===');
+f = await load('../games/wheel.html?rig=nothing');
+await sleep(400);
+ok(st().spins === 3, 'persisted across page loads');
+const railSpins = f.contentDocument.getElementById('stSpins').textContent.trim();
+ok(railSpins === '3', `the rail renders the persisted count (showed "${railSpins}")`);
+const bal = f.contentDocument.getElementById('balN').textContent.trim();
+ok(bal === '970.00', `header balance restored (showed "${bal}")`);
+const r4 = await play(f, '#btnSpin');
+ok(st().spins === 4, `the session continues (spins=${st().spins})`);
+say(`  wheel round: ${r4.timeout ? 'TIMED OUT' : `payout=${r4.payout} credits=${r4.credits}`}`);
+f.remove();
+
+say('');
+say('=== mute toggle persists ===');
+localStorage.setItem(KEY, JSON.stringify({ ...st(), muted: false }));
+f = await load('../games/slots.html');
+f.contentDocument.getElementById('btnMute').click();
+await sleep(200);
+ok(st().muted === true, 'mute written to storage');
+f.remove();
+f = await load('../games/slots.html');
+ok(f.contentDocument.getElementById('btnMute').textContent.includes('🔇'), 'mute restored on reload');
+f.remove();
+
+say('');
+say('=== trophies ===');
+say(`  unlocked: ${(st().trophies || []).join(', ') || '(none)'}`);
+ok((st().trophies || []).includes('first-blood'), 'First Blood awarded for losing');
+ok((st().trophies || []).includes('nothing-burger'), 'Nothing Burger awarded for a 0.00 payout');
+
+say('');
+say(errs.length ? 'ERRORS: ' + errs.join(' | ') : 'no uncaught JS errors');
+say(fails === 0 && !errs.length ? '=== ALL CHECKS PASSED ===' : `=== ${fails} FAILURES, ${errs.length} ERRORS ===`);
+document.title = 'DONE';
+</script></body></html>

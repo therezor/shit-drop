@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>core gag</title>
+<style>body{background:#111;color:#0f0;font:12px monospace}pre{white-space:pre-wrap}iframe{width:1280px;height:900px;border:1px solid #333}</style>
+</head><body>
+<pre id="out">starting…</pre>
+<div id="frames"></div>
+<script type="module">
+const KEY = 'shitdrop.state.v1';
+const out = document.getElementById('out');
+const lines = [];
+const say = (m) => { lines.push(m); out.textContent = lines.join('\n'); };
+let fails = 0;
+const ok = (c, m) => { if (!c) fails++; say(`${c ? 'PASS' : '**FAIL**'}  ${m}`); };
+
+const st = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } };
+const credits = () => +(st().credits ?? NaN);
+const setState = (o) => localStorage.setItem(KEY, JSON.stringify(o));
+
+function reset(bet) {
+  setState({ credits: 1000, bet, spins: 0, wagered: 0, returned: 0, lossStreak: 0, winStreak: 0,
+             realWinStreak: 0, worstNet: 0, bestNet: 0, busts: 0, pityTaken: 0, trophies: [],
+             muted: true, mutedNagged: true, cookiesAck: true, seen: {} });
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function load(url) {
+  return new Promise((res, rej) => {
+    const f = document.createElement('iframe');
+    f.src = url;
+    f.onload = () => setTimeout(() => res(f), 400);
+    f.onerror = rej;
+    document.getElementById('frames').appendChild(f);
+  });
+}
+
+/** Click, watch for the fanfare, wait for the settlement event. */
+function play(f, clicks) {
+  const w = f.contentWindow, d = f.contentDocument;
+  let sawFanfare = false;
+  const poll = setInterval(() => {
+    const ff = d.getElementById('fanfare');
+    if (ff && ff.classList.contains('on')) sawFanfare = true;
+  }, 40);
+
+  return new Promise(async (resolve) => {
+    const to = setTimeout(() => { clearInterval(poll); resolve({ timeout: true, sawFanfare }); }, 25000);
+    w.addEventListener('sd:round', (e) => {
+      clearTimeout(to); clearInterval(poll);
+      setTimeout(() => resolve({ ...e.detail, sawFanfare }), 60);
+    }, { once: true });
+
+    for (const c of clicks) {
+      await sleep(c.after || 0);
+      const btn = d.querySelector(c.sel);
+      if (!btn) { say(`  (no button ${c.sel})`); }
+      else btn.click();
+    }
+  });
+}
+
+const GAMES = [
+  { name: 'drop',       url: '../games/drop.html',       clicks: [{ sel: '#btnDrop' }] },
+  { name: 'slots',      url: '../games/slots.html',      clicks: [{ sel: '#btnSpin' }] },
+  { name: 'flushpoint', url: '../games/flushpoint.html', clicks: [{ sel: '#btnGo' }, { sel: '#btnGo', after: 2200 }] },
+  { name: 'wheel',      url: '../games/wheel.html',      clicks: [{ sel: '#btnSpin' }] },
+];
+
+const errors = [];
+window.addEventListener('error', (e) => errors.push('parent: ' + e.message));
+
+for (const g of GAMES) {
+  say('');
+  say(`=== ${g.name} ===`);
+
+  /* --- the core gag: a forced "win" that is really a loss --- */
+  reset(10);
+  const f1 = await load(`${g.url}?rig=jackpot&seed=7`);
+  f1.contentWindow.addEventListener('error', (e) => errors.push(`${g.name}: ${e.message}`));
+  const before = credits();
+  const r1 = await play(f1, g.clicks);
+  const after = credits();
+
+  if (r1.timeout) { ok(false, `${g.name}: round never settled (timeout)`); }
+  else {
+    say(`  bet=${r1.bet} payout=${r1.payout} net=${r1.net} tier=${r1.tier} credits ${before}→${after}`);
+    ok(r1.payout > 0, `${g.name}: forced win paid something (${r1.payout})`);
+    ok(r1.payout < r1.bet, `${g.name}: the "win" is smaller than the stake (${r1.payout} < ${r1.bet})`);
+    ok(after < before, `${g.name}: balance went DOWN on a "win" (${before} → ${after})`);
+    ok(Math.abs(after - (before - r1.bet + r1.payout)) < 0.005, `${g.name}: bank arithmetic exact`);
+    ok(r1.sawFanfare, `${g.name}: full jackpot fanfare fired on that net loss`);
+    ok(!!r1.tier, `${g.name}: presentation tier assigned (${r1.tier})`);
+  }
+  const sfx1 = f1.contentWindow.__sdSfx || {};
+  say(`  sfx: ${Object.keys(sfx1).length ? Object.entries(sfx1).map(([k, v]) => k + '×' + v).join(' ') : '(none — no audio device in headless)'}`);
+  f1.remove();
+
+  /* --- a forced total loss --- */
+  reset(25);
+  const f2 = await load(`${g.url}?rig=nothing&seed=3`);
+  f2.contentWindow.addEventListener('error', (e) => errors.push(`${g.name}: ${e.message}`));
+  const b2 = credits();
+  const r2 = await play(f2, g.clicks);
+  const a2 = credits();
+  if (r2.timeout) ok(false, `${g.name}: loss round never settled`);
+  else {
+    say(`  bet=${r2.bet} payout=${r2.payout} net=${r2.net} credits ${b2}→${a2}`);
+    ok(r2.payout === 0, `${g.name}: forced loss paid nothing`);
+    ok(Math.abs(a2 - (b2 - r2.bet)) < 0.005, `${g.name}: stake taken exactly once`);
+    ok(!r2.sawFanfare, `${g.name}: no fanfare on a total loss`);
+  }
+  f2.remove();
+}
+
+/* persistence is covered by persistence.html — this file resets
+   state before every round on purpose, so it can't test it. */
+
+/* --- bust → pity --- */
+say('');
+say('=== bust & pity ===');
+reset(500);
+setState({ ...st(), credits: 4 });
+const f3 = await load('../games/slots.html?rig=nothing');
+const d3 = f3.contentDocument;
+d3.querySelector('#btnSpin').click();          // 4 credits, bet 500 → can't afford
+await sleep(400);
+ok(credits() === 4, 'a bet you cannot afford takes nothing');
+f3.contentWindow.dispatchEvent(new f3.contentWindow.CustomEvent('sd:broke'));
+await sleep(1800);
+ok(d3.getElementById('mCashier').classList.contains('on'), 'bust opens the cashier');
+d3.querySelector('[data-pay="0"]').click();
+await sleep(200);
+ok(credits() === 9, `pity handout credited 5 (${credits()})`);
+f3.remove();
+
+say('');
+say(errors.length ? 'JS ERRORS:\n  ' + errors.join('\n  ') : 'no uncaught JS errors');
+say('');
+say(fails === 0 && errors.length === 0 ? '=== ALL CHECKS PASSED ===' : `=== ${fails} FAILURES, ${errors.length} ERRORS ===`);
+document.title = 'DONE';
+</script>
+</body></html>

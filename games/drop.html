@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SHIT DROP — the game</title>
+<meta name="description" content="Drop a turd through ten rows of pegs. The bucket was chosen before you clicked.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💩</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/casino.css">
+<link rel="stylesheet" href="../css/games.css">
+</head>
+<body>
+<main class="wrap">
+  <div id="ghead"></div>
+  <div class="game">
+    <section class="stage" id="stage">
+      <span class="stage__title">Shit Drop · 10 rows · 11 buckets</span>
+      <span class="stage__rtp">RTP 7.31%</span>
+      <div class="dropwrap" id="dropwrap">
+        <canvas id="cv" width="616" height="420" aria-label="Plinko board"></canvas>
+        <div class="dropslots" id="slots"></div>
+      </div>
+    </section>
+    <aside id="rail"></aside>
+  </div>
+</main>
+<script type="module" src="../js/games/drop.js"></script>
+</body>
+</html>
