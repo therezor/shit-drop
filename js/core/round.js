@@ -67,7 +67,8 @@ export async function finish(r, { silentFanfare = false } = {}) {
 /** Near-miss beat, called by a game right before it reveals a loss. */
 export function tease() {
   fanfare.teaseThud();
-  if (rig.chance(0.5)) fanfare.toast(taunt.nearMissLine(), 'info', 3600);
+  // the thud does most of the work; the words only now and then
+  if (rig.chance(0.22)) fanfare.toast(taunt.nearMissLine(), 'info', 3200);
 }
 
 export default { begin, finish, tease };

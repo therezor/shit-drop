@@ -587,3 +587,11 @@ a:hover { color: var(--gold-2); }
   .hdr__nav a { font-size: 11px; padding: 9px 10px; }
   .bal__n { font-size: 20px; }
 }
+
+/* cashier rows: what you give on the left, what you get on the right */
+.paylist button { justify-content: flex-start; }
+.paylist__what { flex: 1; }
+.paylist__amt {
+  font-family: var(--mono); font-weight: 800; font-size: 13px;
+  color: var(--gold); white-space: nowrap;
+}

@@ -1,8 +1,8 @@
 /* ============================================================
-   WHEEL OF MISFORTUNE — 24 segments.
+   WHEEL OF MISFORTUNE — 12 big slices.
 
-   One JACKPOT. Two LOSE EVERYTHING. Twenty-one ways to be
-   insulted or handed a rounding error.
+   One JACKPOT. One LOSE ALL. Ten ways to be insulted or handed
+   a rounding error.
 
    The rigging is geometric and completely deterministic. The
    wheel turns clockwise, which means the pointer travels DOWN
@@ -26,36 +26,28 @@ import * as fanfare from '../core/fanfare.js';
 import * as rig from '../core/rig.js';
 
 const GAME = 'wheel';
-const N = 24;
-const SEG = 360 / N;
 
-/* type: jack | wipe | pay | dud   —  index 0 is JACKPOT, index 1 is MOCK */
+/* Twelve big slices instead of twenty-four thin ones — you can actually read
+   them, and the rock-back off the JACKPOT is a full 30° swing.
+   Index 0 is the JACKPOT and index 1 is a dud, which is what makes the
+   overshoot-then-fall-back work: see spin(). */
 const SEGMENTS = [
   { t: 'jack', l: 'JACKPOT', m: 500 },
-  { t: 'dud',  l: 'MOCK' },
-  { t: 'pay',  l: 'x0.01', m: 0.01 },
-  { t: 'pay',  l: 'x0.10', m: 0.1 },
   { t: 'dud',  l: 'NOTHING' },
-  { t: 'pay',  l: 'x2', m: 2 },
   { t: 'pay',  l: 'x0.01', m: 0.01 },
+  { t: 'pay',  l: 'x2', m: 2 },
   { t: 'dud',  l: 'MOCK' },
+  { t: 'pay',  l: 'x0.10', m: 0.1 },
   { t: 'wipe', l: 'LOSE ALL' },
   { t: 'pay',  l: 'x0.01', m: 0.01 },
   { t: 'pay',  l: 'x1', m: 1 },
   { t: 'dud',  l: 'NOTHING' },
   { t: 'pay',  l: 'x0.10', m: 0.1 },
   { t: 'pay',  l: 'x0.01', m: 0.01 },
-  { t: 'dud',  l: 'MOCK' },
-  { t: 'pay',  l: 'x2', m: 2 },
-  { t: 'pay',  l: 'x0.01', m: 0.01 },
-  { t: 'wipe', l: 'LOSE ALL' },
-  { t: 'dud',  l: 'NOTHING' },
-  { t: 'pay',  l: 'x0.10', m: 0.1 },
-  { t: 'pay',  l: 'x0.01', m: 0.01 },
-  { t: 'pay',  l: 'x1', m: 1 },
-  { t: 'dud',  l: 'MOCK' },
-  { t: 'dud',  l: 'NOTHING' },
 ];
+
+const N = SEGMENTS.length;
+const SEG = 360 / N;
 
 const idxOf = (pred) => SEGMENTS.reduce((a, s, i) => (pred(s) ? [...a, i] : a), []);
 const DUDS   = idxOf((s) => s.t === 'dud');
@@ -80,12 +72,12 @@ gameui.mountRail(rail, {
     </div></div>`,
   paytable: [
     ['JACKPOT — 1 slice', 'x500', true],
-    ['x2 — 2 slices', 'x2', false],
-    ['x1 — 2 slices', 'x1', false],
-    ['x0.10 — 3 slices', 'x0.10', false],
-    ['x0.01 — 6 slices', 'x0.01', false],
-    ['Laughing at you — 8 slices', 'nothing', false],
-    ['LOSE ALL — 2 slices', 'everything', false],
+    ['x2 — 1 slice', 'x2', false],
+    ['x1 — 1 slice', 'x1', false],
+    ['x0.10 — 2 slices', 'x0.10', false],
+    ['x0.01 — 3 slices', 'x0.01', false],
+    ['Laughing at you — 3 slices', 'nothing', false],
+    ['LOSE ALL — 1 slice', 'everything', false],
   ],
 });
 
@@ -116,9 +108,9 @@ function wedge(cx, cy, rOut, a0, a1) {
     // label, rotated to run along the radius
     const mid = a0 + SEG / 2;
     html += `<g transform="rotate(${mid} 200 200)">
-      <text class="wheel__seg-label" x="200" y="72" text-anchor="middle"
-        transform="rotate(90 200 72)"
-        fill="${s.t === 'jack' ? '#fff8d8' : s.t === 'wipe' ? '#ffd7d4' : '#cbbb9e'}">${s.l}</text>
+      <text class="wheel__seg-label" x="200" y="66" text-anchor="middle"
+        transform="rotate(90 200 66)"
+        fill="${s.t === 'jack' ? '#fff8d8' : s.t === 'wipe' ? '#ffd7d4' : '#e6dcc7'}">${s.l}</text>
     </g>`;
   });
   // rim bulbs
@@ -236,10 +228,10 @@ async function spin() {
     fanfare.lossStamp('WIPED');
     sfx.flush();
     fanfare.toast(
-      `<b>LOSE ALL.</b> We took your ${had.toFixed(2)} credits. Two of the twenty-four slices do ` +
-      `this, and they say so in big letters. That is more warning than you get anywhere else.`, 'loss', 9000);
+      `<b>LOSE ALL.</b> We took your ${had.toFixed(2)} credits. One slice in twelve does this, ` +
+      `and it says so in big letters.`, 'loss', 8000);
   } else {
-    if (landed.m && Math.abs(landed.m * r.bet - r.payout) > 0.02 && rig.chance(0.35)) {
+    if (landed.m && Math.abs(landed.m * r.bet - r.payout) > 0.02 && rig.chance(0.15)) {
       setTimeout(() => fanfare.toast(
         `The wheel said <b>${landed.l}</b>. We paid <b>${r.payout.toFixed(2)}</b>. The wheel is a wheel, not a promise.`,
         'info', 5000), 400);

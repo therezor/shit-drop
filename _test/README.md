@@ -28,7 +28,7 @@ Loads each game in an iframe, forces an outcome with `?rig=`, clicks the button 
 - and on a forced total loss: nothing is paid, the stake is taken exactly once, and no fanfare plays
 
 Then it checks that a bet you can't afford takes nothing, that going bust opens the cashier, and
-that the pity handout credits exactly 5.
+that the cashier's options credit different amounts (2,000 for a kidney, 1 for a promise).
 
 ### persistence.html
 
@@ -38,7 +38,13 @@ session. Also checks the mute toggle survives a reload and that the losing troph
 
 ### rtp.mjs
 
-Shims `localStorage`/`location` and runs `rig.settle()` 200,000 times. Prints the outcome
-distribution, the real RTP, the house edge, what share of "wins" are still net losses, and the
-near-miss rate. These are the numbers quoted in the main README and in the site's Fairness modal —
-if you change the rig, re-run this and update them.
+Shims `localStorage`/`location` and simulates **4,000 sessions of 100 rounds** through `bank.js`.
+It has to run whole sessions rather than just calling `settle()` in a loop, because the rules in
+`rig.js` react to session state — first three goes, loss streaks, bet size, total rounds played.
+Each session starts with `bank.reset()`; poking `localStorage` directly does not work, since
+`store.js` caches state in memory.
+
+Prints the outcome distribution, the real RTP, the house edge, what share of "wins" are still net
+losses, the near-miss rate, which rule bent each round, and a table showing that betting more
+really does pay less. These are the numbers quoted in the main README and in the site's "Is this
+fair?" modal — if you change the rig, re-run this and update them.

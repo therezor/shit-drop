@@ -117,7 +117,7 @@ for (const g of GAMES) {
 
 /* --- bust → pity --- */
 say('');
-say('=== bust & pity ===');
+say('=== bust & the cashier ===');
 reset(500);
 setState({ ...st(), credits: 4 });
 const f3 = await load('../games/slots.html?rig=nothing');
@@ -128,9 +128,26 @@ ok(credits() === 4, 'a bet you cannot afford takes nothing');
 f3.contentWindow.dispatchEvent(new f3.contentWindow.CustomEvent('sd:broke'));
 await sleep(1800);
 ok(d3.getElementById('mCashier').classList.contains('on'), 'bust opens the cashier');
-d3.querySelector('[data-pay="0"]').click();
-await sleep(200);
-ok(credits() === 9, `pity handout credited 5 (${credits()})`);
+
+// the cashier's options pay wildly different amounts
+const rows = [...d3.querySelectorAll('[data-pay]')];
+say(`  cashier options: ${rows.map((b) => b.querySelector('.paylist__amt').textContent.trim()).join(' / ')}`);
+ok(rows.length >= 5, `cashier offers several options (${rows.length})`);
+
+const before3 = credits();
+rows[0].click();                                  // the kidney, the dearest one
+await sleep(250);
+const kidney = credits() - before3;
+ok(kidney === 2000, `top option credited 2000 (${kidney})`);
+
+d3.getElementById('btnDeposit').click();
+await sleep(250);
+const before4 = credits();
+rows[rows.length - 1].click();                    // a promise, the cheapest one
+await sleep(250);
+const promise = credits() - before4;
+ok(promise === 1, `bottom option credited 1 (${promise})`);
+ok(kidney !== promise, 'different options pay different amounts');
 f3.remove();
 
 say('');

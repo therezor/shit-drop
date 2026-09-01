@@ -1,18 +1,27 @@
 /* ============================================================
    SHIT DROP — plinko.
 
-   Ten peg rows, eleven buckets. The JACKPOT buckets sit at the
-   two outer edges, which in real plinko is the mathematically
-   unreachable position — so that part isn't even a lie.
+   Twelve peg rows, thirteen buckets. JACKPOT sits at both far
+   edges. NOTHING fills the middle. Everything in between is
+   loose change.
 
-   How the rig works: rig.js decides the payout FIRST. We then
-   pick the bucket whose multiplier best matches, and because
-   the bucket index equals the number of right-hand bounces, we
-   can generate an exact left/right sequence that lands there.
-   The sequence is deliberately front-loaded to one side so the
-   turd drifts out toward a JACKPOT edge, grazes it, and then
-   corrects back into nothing. That's the near-miss, and it's
-   fully deterministic.
+   The drop happens in two parts, and only the first one is
+   honest:
+
+     1. THE FALL — a real bounce sequence, every move heading
+        outward, so the turd hugs the wall and lands in the
+        JACKPOT. It genuinely lands there. The bucket lights up.
+        The siren goes off.
+
+     2. THE CORRECTION — and then it just slides sideways into
+        whatever the rig decided. No bounce, no arc, no sound, no
+        announcement. It happens at normal speed as if nothing
+        had happened at all.
+
+   Part 2 is not hidden and it is not explained. Nobody misses
+   it. That is the entire point of the website: you watch your
+   win get moved somewhere else, and the machine does not even
+   acknowledge it.
    ============================================================ */
 
 import * as chrome from '../core/chrome.js';
@@ -24,19 +33,23 @@ import * as fanfare from '../core/fanfare.js';
 import * as rig from '../core/rig.js';
 
 const GAME = 'drop';
-const ROWS = 10;
-const BUCKETS = ROWS + 1;                       // 11
-// Edges pay everything. In real plinko you never reach the edges.
-const MULT = [500, 2, 0.5, 0.1, 0.01, 0, 0.01, 0.1, 0.5, 2, 500];
-const LABEL = MULT.map((m) => (m >= 500 ? 'JACKPOT' : m === 0 ? 'NOTHING' : 'x' + m));
-// eleven words don't fit across a phone, so the buckets get symbols instead
-const LABEL_SHORT = MULT.map((m) =>
-  m >= 500 ? '💎' : m === 0 ? '✖' : String(m).replace(/^0/, ''));
+const ROWS = 12;
+const BUCKETS = ROWS + 1;                 // 13
+const MID = (BUCKETS - 1) / 2;            // 6
+
+/*  0      1   2   3     4     5   6   7    8     9    10  11   12
+    JACK  x2  x1 x0.10 x0.01  ✖   ✖   ✖  x0.01 x0.10  x1  x2  JACK
+    ^^^^                      ^^^^^^^^^^^                    ^^^^
+    jackpots on the walls      nothing in the middle, where it always ends up */
+const MULT  = [500, 2, 1, 0.1, 0.01, 0, 0, 0, 0.01, 0.1, 1, 2, 500];
+const LABEL = MULT.map((m) => (m === 500 ? 'JACKPOT' : m === 0 ? 'NOTHING' : 'x' + m));
+const SHORT = MULT.map((m) => (m === 500 ? '🖕' : m === 0 ? '✖' : 'x' + String(m).replace(/^0/, '')));
+const EDGES = [0, BUCKETS - 1];
 
 chrome.mount({ active: 'drop.html' });
 gameui.gameHeader(document.getElementById('ghead'), {
   em: '💩', title: 'SHIT DROP',
-  sub: 'Ten rows of pegs. Eleven buckets. One answer, picked before you click.',
+  sub: 'It lands in the JACKPOT. Then we drag it out by hand.',
 });
 
 const rail = document.getElementById('rail');
@@ -47,26 +60,23 @@ gameui.mountRail(rail, {
       ${gameui.AUTOPLAY_HTML}
     </div></div>`,
   paytable: [
-    ['Far left / far right', 'x500', true],
-    ['Next one in', 'x2', false],
-    ['Next one in', 'x0.50', false],
-    ['Next one in', 'x0.10', false],
-    ['Next one in', 'x0.01', false],
-    ['Middle', 'nothing', false],
+    ['🖕 JACKPOT — both walls', 'x500', true],
+    ['x2 / x1', 'x2', false],
+    ['x0.10 / x0.01', 'small', false],
+    ['✖ The middle three', 'nothing', false],
   ],
 });
 
-/* ---------------- slot labels ---------------- */
+/* ---------------- bucket labels ---------------- */
 const slotsEl = document.getElementById('slots');
 slotsEl.innerHTML = MULT.map((m, i) =>
-  `<div class="dropslot ${m >= 500 ? 'jack' : m === 0 ? 'nil' : ''}" data-i="${i}"></div>`
+  `<div class="dropslot ${m === 500 ? 'jack' : m === 0 ? 'nil' : ''}" data-i="${i}"></div>`
 ).join('');
 const slotEls = [...slotsEl.children];
 
-/** Swap to symbols when the board is too narrow for words. */
 function paintSlotLabels() {
-  const short = window.innerWidth <= 760;
-  slotEls.forEach((el, i) => { el.textContent = short ? LABEL_SHORT[i] : LABEL[i]; });
+  const short = window.innerWidth <= 900;
+  slotEls.forEach((el, i) => { el.textContent = short ? SHORT[i] : LABEL[i]; });
 }
 paintSlotLabels();
 window.addEventListener('resize', paintSlotLabels);
@@ -77,12 +87,10 @@ const ctx = cv.getContext('2d');
 const W = cv.width, H = cv.height;
 const SP = W / BUCKETS;            // bucket pitch — matches the HTML labels exactly
 const CX = W / 2;
-const PAD_TOP = 34;
-const ROW_H = (H - PAD_TOP - 26) / ROWS;
+const PAD_TOP = 30;
+const ROW_H = (H - PAD_TOP - 40) / ROWS;
+const MOUTH = PAD_TOP + ROWS * ROW_H + 6;   // the line the correction slides along
 
-// Crisp on retina, and never squashed: the backing store is fixed while the
-// CSS box is fluid. Only width is set — `height: auto` lets the canvas keep
-// its own 616:420 ratio, which an inline height would have broken.
 (function hidpi() {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   cv.width = W * dpr; cv.height = H * dpr;
@@ -95,64 +103,66 @@ const ROW_H = (H - PAD_TOP - 26) / ROWS;
 const ux = (u) => CX + u * SP;
 const rowY = (r) => PAD_TOP + r * ROW_H;
 
-/* The canvas is 616 wide but CSS shrinks it to fit a phone, which shrinks the
-   pegs with it. This is how much bigger to draw everything to compensate. */
 let vs = 1;
-function measure() { vs = Math.max(1, W / (cv.clientWidth || W)); }
+const measure = () => { vs = Math.max(1, W / (cv.clientWidth || W)); };
 measure();
 window.addEventListener('resize', measure);
 
-/** Peg row r holds r+1 pegs at u = -r/2 + k — the positions the turd can occupy. */
-function pegs() {
+/** Peg row r holds r+1 pegs at u = -r/2 + k. */
+const PEGS = (() => {
   const out = [];
   for (let r = 0; r < ROWS; r++)
     for (let k = 0; k <= r; k++) out.push({ u: -r / 2 + k, r });
   return out;
-}
-const PEGS = pegs();
+})();
 
-let ball = null;         // { u, y, hit }
-let litSlot = -1;
+let ball = null;          // { u, y, hit }
 let glow = [];
-let clearTimer = 0;      // pending "remove the turd" timer from the previous drop
+let clearTimer = 0;
+let hotJack = -1;         // jackpot bucket lit up
 
 function draw() {
   ctx.clearRect(0, 0, W, H);
 
-  // funnel at the top
+  // funnel
   ctx.strokeStyle = '#ffffff18';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(CX - 42, 6); ctx.lineTo(CX - 12, PAD_TOP - 16);
-  ctx.moveTo(CX + 42, 6); ctx.lineTo(CX + 12, PAD_TOP - 16);
+  ctx.moveTo(CX - 40, 4); ctx.lineTo(CX - 11, PAD_TOP - 14);
+  ctx.moveTo(CX + 40, 4); ctx.lineTo(CX + 11, PAD_TOP - 14);
   ctx.stroke();
+
+  // the jackpot walls
+  for (const i of EDGES) {
+    const hot = hotJack === i;
+    const g = ctx.createLinearGradient(0, PAD_TOP, 0, H);
+    g.addColorStop(0, hot ? '#f5c51826' : '#f5c5180a');
+    g.addColorStop(1, hot ? '#f5c51899' : '#f5c51828');
+    ctx.fillStyle = g;
+    ctx.fillRect(i * SP, PAD_TOP - 12, SP, H - PAD_TOP + 12);
+  }
+  // the losing middle
+  ctx.fillStyle = '#ff3b300f';
+  ctx.fillRect(5 * SP, PAD_TOP - 12, 3 * SP, H - PAD_TOP + 12);
 
   // pegs
   for (const p of PEGS) {
     const x = ux(p.u), y = rowY(p.r);
-    const hot = ball && ball.hit === p.r && Math.abs(ball.u - p.u) < 0.3;
+    const hit = ball && ball.hit === p.r && Math.abs(ball.u - p.u) < 0.3;
     ctx.beginPath();
-    ctx.arc(x, y, (hot ? 5.4 : 3.6) * vs, 0, Math.PI * 2);
-    ctx.fillStyle = hot ? '#fff6cf' : '#7f9c88';
+    ctx.arc(x, y, (hit ? 5.4 : 3.4) * vs, 0, Math.PI * 2);
+    ctx.fillStyle = hit ? '#fff6cf' : '#7f9c88';
     ctx.fill();
-    if (hot) { ctx.shadowColor = '#f5c518'; ctx.shadowBlur = 14 * vs; ctx.fill(); ctx.shadowBlur = 0; }
+    if (hit) { ctx.shadowColor = '#f5c518'; ctx.shadowBlur = 14 * vs; ctx.fill(); ctx.shadowBlur = 0; }
   }
 
   // bucket dividers
   ctx.strokeStyle = '#ffffff14';
   ctx.lineWidth = 1;
   for (let i = 0; i <= BUCKETS; i++) {
-    const x = i * SP;
     ctx.beginPath();
-    ctx.moveTo(x, rowY(ROWS) - 4); ctx.lineTo(x, H);
+    ctx.moveTo(i * SP, rowY(ROWS) - 4); ctx.lineTo(i * SP, H);
     ctx.stroke();
-  }
-  // the two jackpot edges, glowing uselessly
-  for (const i of [0, BUCKETS - 1]) {
-    const g = ctx.createLinearGradient(0, rowY(ROWS) - 10, 0, H);
-    g.addColorStop(0, '#f5c51800'); g.addColorStop(1, '#f5c51844');
-    ctx.fillStyle = g;
-    ctx.fillRect(i * SP, rowY(ROWS) - 10, SP, H - rowY(ROWS) + 10);
   }
 
   // trail
@@ -167,68 +177,46 @@ function draw() {
 
   // the turd
   if (ball) {
-    const x = ux(ball.u), y = ball.y;
     ctx.save();
+    ctx.translate(ux(ball.u), ball.y);
     ctx.shadowColor = '#000'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 4;
-    ctx.font = `${Math.round(26 * vs)}px serif`;
+    ctx.font = `${Math.round(25 * vs)}px serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('💩', x, y);
+    ctx.fillText('💩', 0, 0);
     ctx.restore();
   }
 }
 draw();
 
-/* ---------------- the rig → a left/right sequence ---------------- */
+/* ---------------- the rig → a bucket ---------------- */
 
-/** Which bucket best represents this payout ratio? Never the edges. */
+/** Which bucket the turd must end up in. Never a jackpot. */
 function targetBucket(r) {
-  if (r.payout === 0) return 5;                                   // dead centre: NOTHING
   const side = rig.chance(0.5) ? -1 : 1;
-  const at = (offset) => 5 + side * offset;
-  if (r.outcome === 'real') return at(4);                         // x2 ring
-  if (r.outcome === 'breakeven') return at(3);                    // x0.50 ring
-  return r.ratio < 0.05 ? at(1) : at(2);                          // x0.01 / x0.10 rings
+  const at = (i) => (side < 0 ? i : BUCKETS - 1 - i);
+  if (r.payout === 0) return rig.pick([5, 6, 7]);   // ✖ the losing middle
+  if (r.outcome === 'real') return at(1);           // x2
+  if (r.outcome === 'breakeven') return at(2);      // x1
+  return r.ratio < 0.05 ? at(4) : at(3);            // x0.01 / x0.10
 }
 
 /**
- * Build the bounce sequence. `rights` must equal the target bucket,
- * but the ORDER is ours — so we shove the turd out toward a jackpot
- * edge first and reel it back in. Guaranteed graze, every drop.
+ * An honest bounce sequence that lands exactly in `bucket`.
+ * Used both for the run down the wall into the JACKPOT and for the
+ * occasional plain, uncheated drop.
  */
-function sequence(target, wantNearMiss) {
-  const rights = target;
-  const lefts = ROWS - target;
-  const seq = [];
-
-  if (wantNearMiss) {
-    // front-load whichever side has spare moves, so the turd drifts
-    // out to an edge before being corrected back into the middle
-    const outward = rights >= lefts ? 1 : -1;
-    let R = rights, L = lefts;
-    const lead = Math.min(outward === 1 ? R : L, Math.max(3, Math.floor(ROWS * 0.55)));
-    for (let i = 0; i < lead; i++) { seq.push(outward); outward === 1 ? R-- : L--; }
-    const rest = [...Array(R).fill(1), ...Array(L).fill(-1)];
-    for (let i = rest.length - 1; i > 0; i--) {           // shuffle the correction
-      const j = Math.floor(rig.rand() * (i + 1));
-      [rest[i], rest[j]] = [rest[j], rest[i]];
-    }
-    seq.push(...rest);
-  } else {
-    const all = [...Array(rights).fill(1), ...Array(lefts).fill(-1)];
-    for (let i = all.length - 1; i > 0; i--) {
-      const j = Math.floor(rig.rand() * (i + 1));
-      [all[i], all[j]] = [all[j], all[i]];
-    }
-    seq.push(...all);
+function sequence(bucket) {
+  const all = [...Array(bucket).fill(1), ...Array(ROWS - bucket).fill(-1)];
+  for (let i = all.length - 1; i > 0; i--) {
+    const j = Math.floor(rig.rand() * (i + 1));
+    [all[i], all[j]] = [all[j], all[i]];
   }
-  return seq;
+  return all;
 }
 
 /* ---------------- animation ---------------- */
 
 const ease = (t) => t * t * (3 - 2 * t);
-const Y_MOUTH = () => rowY(ROWS) + 2;
-
 const tween = (ms, fn) => new Promise((done) => {
   const t0 = performance.now();
   const step = (now) => {
@@ -238,89 +226,85 @@ const tween = (ms, fn) => new Promise((done) => {
   };
   requestAnimationFrame(step);
 });
-const hold = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** Bounce down the peg rows following the predetermined sequence. */
-async function animate(seq, nearMiss) {
+/** The fall. Real bounces, one per row. */
+async function fall(seq) {
   let u = 0;
-  clearTimeout(clearTimer);   // the last drop's cleanup must not fire mid-flight
-  ball = { u: 0, y: 6, hit: -1 };
+  clearTimeout(clearTimer);
+  ball = { u: 0, y: 4, hit: -1 };
   glow = [];
+  hotJack = -1;
 
   for (let r = 0; r < seq.length; r++) {
     const from = u;
     const to = u + seq[r] * 0.5;
-    const y0 = r === 0 ? 6 : rowY(r - 1);
+    const y0 = r === 0 ? 4 : rowY(r - 1);
     const y1 = rowY(r);
+    // slow down as it nears the bottom — it looks like it is about to win
+    const dur = 88 + (r / seq.length) * 55;
 
-    await tween(108, (p) => {
+    await tween(dur, (p) => {
       if (!ball) return;
       ball.u = from + (to - from) * ease(p);
-      ball.y = y0 + (y1 - y0) * p - Math.sin(p * Math.PI) * 7;   // hop over the peg
+      ball.y = y0 + (y1 - y0) * p - Math.sin(p * Math.PI) * 6;
       ball.hit = r;
       glow.push({ u: ball.u, y: ball.y });
-      if (glow.length > 12) glow.shift();
+      if (glow.length > 14) glow.shift();
       draw();
     });
 
     u = to;
-    sfx.squelch(1.25 - r * 0.055);
-    if (Math.abs(u) >= 4 && r < seq.length - 1) sfx.tick(1.6);    // out near the edge
+    sfx.squelch(1.25 - r * 0.045);
+    if (Math.abs(u) >= 4.5) sfx.tick(1.7);      // out by the wall, near the jackpot
   }
-  return land(u, nearMiss);
+
+  // settle into the mouth of whatever it landed in
+  const yTop = rowY(ROWS - 1);
+  await tween(200, (p) => { if (ball) { ball.hit = -1; ball.y = yTop + (MOUTH - yTop) * p; } draw(); });
+  return Math.round(u + MID);
 }
 
-async function land(u, nearMiss) {
-  const idx = Math.round(u + 5);
-  if (ball) ball.hit = -1;
-  const mouth = Y_MOUTH();
-
-  // drop to the mouth of the buckets
-  const yTop = rowY(ROWS - 1);
-  await tween(240, (p) => { if (ball) ball.y = yTop + (mouth - yTop) * (p * p); draw(); });
-
-  if (nearMiss) {
-    /* THE FLYBY — and we should be honest about this one.
-       A turd that lands in the middle CANNOT reach an edge bucket:
-       eleven buckets over ten rows means the furthest a centre-landing
-       drop can stray is halfway. The geometry forbids it.
-       So we move it there anyway. It skims the JACKPOT slot, the slot
-       lights up, a siren fires, and then it slides back into the bucket
-       that was chosen before you clicked.
-       The industry calls this a "near-miss feature". It is a lie, and
-       this is the function that tells it. */
-    const edge = idx <= 5 ? 0 : BUCKETS - 1;
-    const fromU = u, toU = edge - 5;
-    slotEls[edge].classList.add('lit');
-    sfx.siren(1);
-    await tween(440, (p) => {
-      if (!ball) return;
-      ball.u = fromU + (toU - fromU) * ease(p);
-      ball.y = mouth - Math.sin(p * Math.PI) * 26;
-      draw();
-    });
-    sfx.thud();
-    await hold(300);                       // let it sit on the jackpot. Let it hurt.
-    slotEls[edge].classList.remove('lit');
-    await tween(380, (p) => {
-      if (!ball) return;
-      ball.u = toU + (fromU - toU) * ease(p);
-      ball.y = mouth - Math.sin(p * Math.PI) * 12;
-      draw();
-    });
-  }
-
-  // into the real bucket
-  await tween(190, (p) => { if (ball) ball.y = mouth + (H - 12 - mouth) * (p * p); draw(); });
+/** It landed in the JACKPOT. Light it, the way any bucket lights up. */
+function markJackpot(idx) {
+  hotJack = idx;
+  slotEls[idx].classList.add('lit');
   sfx.splat();
+  draw();
+}
 
-  litSlot = idx;
+/**
+ * THE CORRECTION.
+ *
+ * It slides. That is all. Straight line, ordinary speed, no arc, no bounce,
+ * no sound, no label, no pause on either side of it. The jackpot bucket goes
+ * dark and the turd is somewhere else.
+ *
+ * Deliberately underplayed: a pause and an arrow would turn it into a joke
+ * the site is telling you. Done flatly, it stays a thing you noticed.
+ */
+async function correct(fromIdx, toIdx) {
+  const from = fromIdx - MID, to = toIdx - MID;
+  glow = [];
+  slotEls[fromIdx].classList.remove('lit');
+  hotJack = -1;
+
+  await tween(420, (p) => {
+    if (!ball) return;
+    ball.u = from + (to - from) * ease(p);
+    ball.y = MOUTH;
+    draw();
+  });
+}
+
+/** Drop into the bucket and splat. */
+async function settle(idx) {
+  await tween(200, (p) => { if (ball) ball.y = MOUTH + (H - 12 - MOUTH) * (p * p); draw(); });
+  sfx.splat();
   slotEls[idx].classList.add('lit');
   const wrap = document.getElementById('dropwrap');
   wrap.classList.add('dropzoom');
   setTimeout(() => { slotEls[idx].classList.remove('lit'); wrap.classList.remove('dropzoom'); }, 900);
   clearTimer = setTimeout(() => { ball = null; glow = []; draw(); }, 700);
-  return idx;
 }
 
 /* ---------------- wire it up ---------------- */
@@ -336,17 +320,25 @@ async function drop() {
   btn.disabled = true;
 
   const target = targetBucket(r);
-  const seq = sequence(target, r.nearMiss);
-  const landed = await animate(seq, r.nearMiss);
 
-  if (r.payout === 0 && r.nearMiss) round.tease();
+  if (r.nearMiss) {
+    // run it down the wall into the jackpot, then quietly put it somewhere else
+    const edge = rig.pick(EDGES);
+    const landed = await fall(sequence(edge));
+    markJackpot(landed);
+    await correct(landed, target);
+    await settle(target);
+  } else {
+    // a plain drop, straight into what was chosen. No theatre.
+    const landed = await fall(sequence(target));
+    await settle(landed);
+  }
 
-  // the paytable is decorative, and every so often we say so
-  const shown = MULT[landed];
-  if (r.payout > 0 && Math.abs(shown * r.bet - r.payout) > 0.02 && rig.chance(0.4)) {
+  const shown = MULT[target];
+  if (r.payout > 0 && Math.abs(shown * r.bet - r.payout) > 0.02 && rig.chance(0.15)) {
     setTimeout(() => fanfare.toast(
-      `The bucket said <b>x${shown}</b>. We paid you <b>${r.payout.toFixed(2)}</b>. The buckets are just paint.`,
-      'info', 5000), 400);
+      `The bucket said <b>x${shown}</b>. We paid <b>${r.payout.toFixed(2)}</b>. The buckets are paint.`,
+      'info', 4500), 400);
   }
 
   await round.finish(r);
@@ -356,9 +348,8 @@ async function drop() {
 
 btn.addEventListener('click', drop);
 gameui.wireAutoplay(rail, drop);
-
 document.addEventListener('keydown', (e) => {
   if (e.code === 'Space' && e.target.tagName !== 'INPUT') { e.preventDefault(); drop(); }
 });
 
-console.log('[drop] ready — bucket multipliers:', MULT.join(', '));
+console.log('[drop] ready — buckets:', LABEL.join(' | '));

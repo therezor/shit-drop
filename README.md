@@ -2,8 +2,8 @@
 
 **You'll never win.™**
 
-A parody casino. Four rigged games, an 7.31% payout rate printed honestly on every screen,
-and a jackpot siren that goes off when you lose money.
+A parody casino. Four rigged games, a 6.57% payout rate printed honestly on every screen,
+and a jackpot siren that goes off when you lose money. You start with 5,000 credits.
 
 > **This is satire.** No real money, payments, deposits, or accounts exist here. Your "balance"
 > is a number in your own browser's `localStorage`, the cashier accepts nothing, and there is no
@@ -20,26 +20,30 @@ one as it happens:
 | The trick | What it looks like here |
 |---|---|
 | **A net loss presented as a win** | Any payout above zero fires the *full* jackpot sequence — sirens, confetti, screen shake, a gold counter rolling up. Bet 50, get 0.01 back, and the screen screams **JACKPOT**. Your actual net loss is printed underneath in 8px grey. |
-| **Engineered near-misses** | 82% of total losses show you an almost-win first. The slots stop with 💎💎 and roll the third diamond past the line, slowly. The wheel's pointer enters the JACKPOT segment, sits there, then rocks back out. Neither is bad luck; both are functions. |
+| **Engineered near-misses** | 82% of total losses show you an almost-win first. The plinko turd lands *in* the jackpot and is then slid sideways into NOTHING. The slots stop with 🖕🖕 and roll the third one past the line, slowly. The wheel's arrow enters the JACKPOT slice, sits there, then rocks back out. None of it is bad luck; all of it is functions. |
 | **The tiny real win** | About 0.5% of rounds genuinely pay out. A machine that never pays is abandoned in a minute, so it pays — just enough to keep you in the chair. |
-| **The escalating rig** | Win twice on net and the loss weighting jumps. Lose eight in a row and you're thrown a crumb. Get near broke and a crumb is guaranteed. |
+| **Six named rules** | The odds change based on what you're doing: *beginner's luck* (your first three goes are generous), *comeback tax* (win twice and it's taken back), *big bet penalty* (betting 100+ halves your payout rate), *session decay* (worse after 60 goes), plus crumbs thrown when you're on a losing streak or nearly broke. Whichever rule is currently bending your odds is **named on screen**, in the corner of the game, before you press anything. |
 | **Gamification of losses** | Fourteen achievements. Every single one is for losing. The VIP ladder fills up based on money *destroyed*, and it tells you the reward is nothing. |
-| **Dark patterns** | A welcome bonus that expires in 4:59 and resets forever. A cookie banner whose "Reject all" button runs away from your cursor and then accepts everything. A Withdraw button with a 1,000,000-credit minimum. |
+| **Dark patterns** | A welcome bonus that expires in 4:59 and resets forever. A cookie banner whose "Reject all" button runs away from your cursor and then accepts everything. A cash-out button with a 1,000,000-credit minimum. A cashier that pays 2,000 credits for a kidney and 1 for a promise. |
 | **Fake social proof** | A live-winners ticker of amounts nobody can win, with the truth spliced in between the entries. |
 | **Abuse** | Full profanity. It insults you after every round, harder as your losses grow. It's more honest than "so close!" |
 
 ## The games
 
-- **💩 Shit Drop** — plinko. Ten peg rows, eleven buckets, JACKPOT at both outer edges (where, in real
-  plinko, nothing ever lands). The bucket is chosen before you click; the bounce sequence is generated
-  backwards from it.
-- **🎰 Shit Slots** — three reels, one payline. Reels one and two land 💎💎 on losing spins and the third
-  crawls the diamond out of the window over two full seconds.
-- **🚽 Flushpoint** — a crash game. The multiplier climbs while the bowl fills. If the round was already
-  a loss, the flush is retro-fitted to land at **exactly 0.01 under the multiplier you clicked at**. If it
-  was a win, you cash out fine and then get charged a 97% "withdrawal fee", itemised.
-- **🎡 Wheel of Misfortune** — 24 segments: one JACKPOT, two LOSE ALL, twenty-one insults and rounding
-  errors. The overshoot into the jackpot is exactly one segment wide, by construction.
+- **💩 Shit Drop** — plinko. Twelve peg rows, thirteen buckets, JACKPOT at both far edges and NOTHING
+  filling the middle. The fall is honest: a real bounce sequence that hugs the wall and genuinely
+  **lands in the jackpot**. Then the turd just slides sideways into whatever the rig decided — no
+  bounce, no arc, no sound, no pause, no explanation. Nobody misses it.
+- **🎰 Shit Slots** — three reels, one payline. Reels one and two land 🖕🖕 on losing spins and the third
+  crawls the last one out of the window over two full seconds.
+- **🚽 Flushpoint** — a crash game. Your 💩 climbs out of a toilet along a line; the higher it gets the
+  more it's worth, and the more water is waiting for it. Grab it before the flush. If the round was
+  already a loss, the flush is retro-fitted to land **exactly 0.01 under the multiplier you clicked
+  at**, and the poo slides all the way back down its own line into the bowl and gets flushed. If it
+  was a win, you grab it fine and then get charged a ~97% "handling fee", itemised.
+- **🎡 Wheel of Misfortune** — twelve big slices: one JACKPOT, one LOSE ALL, ten insults and rounding
+  errors. The overshoot into the jackpot is exactly one slice wide, by construction, and the wheel
+  rocks back out of it.
 
 ## How the rigging actually works
 
@@ -48,12 +52,16 @@ It runs *before any animation starts*. The reels, pegs, wheel and toilet are the
 result that already exists.
 
 ```
-~62%  →  payout 0
-~33%  →  payout 0.1%–35% of your stake   (a loss, presented as a win)
-~4.5% →  payout ~1x                      (break even, presented as legendary)
+~64%  →  payout 0
+~32%  →  payout 0.1%–35% of your stake   (a loss, presented as a win)
+~4%   →  payout ~1x                      (break even, presented as legendary)
 ~0.5% →  payout 2x–3x                    (a genuine win)
                                           ────────
-                          real RTP ≈ 7.3%,  house edge ≈ 92.7%
+                          real RTP ≈ 6.6%,  house edge ≈ 93.4%
+
+and betting more makes it worse, on purpose:
+   bet  10  →  you get back 6.5%
+   bet 500  →  you get back 3.4%
 ```
 
 The second half of the design is that **presentation is deliberately decoupled from the result**:
@@ -63,7 +71,7 @@ The second half of the design is that **presentation is deliberately decoupled f
 if (ratio < 0.02) return weighted([['JACKPOT', 6], ['MEGA WIN', 3], ['BIG WIN', 1]]);
 ```
 
-Read the file. It's forty lines and it's the whole business model of an industry.
+Read the file. The six rules are forty lines and they are the whole business model of an industry.
 
 ## Sound
 
@@ -121,8 +129,9 @@ node _test/rtp.mjs                                 # measured RTP over 200,000 r
 
 `core-gag.html` drives each game in an iframe and asserts, per game, that a forced "win" pays out
 less than the stake, that the balance goes **down**, and that the full jackpot fanfare fires anyway.
-`rtp.mjs` produces the distribution numbers quoted above — if you change the rig, re-run it and
-update them. See [`_test/README.md`](_test/README.md).
+`rtp.mjs` simulates 4,000 whole sessions through `bank.js` — it has to, because the rules react to
+your session — and produces every number quoted above. If you change the rig, re-run it and update
+them. See [`_test/README.md`](_test/README.md).
 
 ## Layout
 

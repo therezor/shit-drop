@@ -332,68 +332,67 @@
 @keyframes teasewob { from { transform: translateY(0) } to { transform: translateY(-3px) } }
 
 /* ---- FLUSHPOINT ---- */
-.fp { position: relative; width: 100%; max-width: 560px; text-align: center; }
+.fp { position: relative; width: 100%; max-width: 720px; }
+
+/* One scene. The canvas draws the line; the toilet and the poo sit on top of
+   it, positioned in percentages of the same box so everything lines up at any
+   size. X0/Y0 in flushpoint.js are the other half of these numbers. */
+.fp__scene { position: relative; width: 100%; }
+.fp__scene canvas { display: block; width: 100%; height: auto; }
+
+.fp__loo {
+  position: absolute;
+  left: 4.29%;            /* (105 - 75) / 700 */
+  top: 30%;               /* (200 - 95) / 350 */
+  width: 21.43%;          /* 150 / 700 */
+}
+.fp__loo svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 8px 14px #0009); }
+.fp__loo--tense { animation: looTense .5s ease-in-out infinite alternate; }
+.fp__loo--panic { animation: looPanic .12s linear infinite alternate; }
+@keyframes looTense { from { transform: translateY(0) } to { transform: translateY(-2px) } }
+@keyframes looPanic {
+  from { transform: translate(-1.5px, 0) rotate(-.4deg) }
+  to   { transform: translate(1.5px, -1px) rotate(.4deg) }
+}
+
+.fp__rider {
+  position: absolute;
+  left: 15%; top: 57%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(24px, 4.4vw, 34px);
+  line-height: 1;
+  filter: drop-shadow(0 4px 7px #000a);
+  pointer-events: none;
+  z-index: 2;
+  will-change: left, top, transform;
+}
+.fp__rider--safe { animation: riderSafe .7s cubic-bezier(.2,1.4,.4,1); }
+@keyframes riderSafe {
+  0% { filter: drop-shadow(0 0 0 #39ff88) }
+  40% { filter: drop-shadow(0 0 22px #39ff88) drop-shadow(0 4px 7px #000a) }
+  100% { filter: drop-shadow(0 4px 7px #000a) }
+}
+
 .fp__mult {
+  position: absolute; right: 2%; top: 3%;
   font-family: var(--mono); font-weight: 800;
-  font-size: clamp(48px, 14vw, 104px);
+  font-size: clamp(30px, 6vw, 52px);
   line-height: 1;
   color: var(--toxic);
-  text-shadow: 0 0 44px #39ff8866;
+  text-shadow: 0 0 36px #39ff8855;
   font-variant-numeric: tabular-nums;
-  transition: color .2s;
+  z-index: 3;
 }
-.fp__mult.danger { color: var(--piss); text-shadow: 0 0 44px #ffd23f77; }
-.fp__mult.dead { color: var(--blood); text-shadow: 0 0 44px #ff3b3077; animation: shake .5s; }
-.fp__lbl { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #5f7a68; }
-.fp__bowl {
-  position: relative; margin: 16px auto 0;
-  width: min(280px, 72vw); height: min(200px, 52vw);
-  border: 5px solid #cfd6d8;
-  border-top: 0;
-  border-radius: 12px 12px 46% 46% / 12px 12px 62% 62%;
-  background: linear-gradient(180deg, #e9eef0, #b9c3c6);
-  box-shadow: 0 20px 40px -18px #000c, 0 0 0 4px #7f8a8d inset;
-  overflow: hidden;
+.fp__mult.danger { color: var(--piss); text-shadow: 0 0 36px #ffd23f66; }
+.fp__mult.dead { color: var(--blood); text-shadow: 0 0 36px #ff3b3066; animation: shake .5s; }
+
+.fp__hint {
+  margin-top: 6px; text-align: center;
+  font-size: 13px; color: #9fb3a6;
+  min-height: 1.5em;
 }
-.fp__rim {
-  position: absolute; left: -6px; right: -6px; top: 0; height: 20px;
-  border-radius: 0 0 50% 50% / 0 0 100% 100%;
-  background: linear-gradient(180deg, #ffffff, #c3ccd0 60%, #9aa5a9);
-  box-shadow: 0 5px 12px #0006, 0 -2px 0 #fff inset;
-  z-index: 2;
-}
-.fp__water {
-  position: absolute; left: 0; right: 0; bottom: 0;
-  height: 18%;
-  background: linear-gradient(180deg, #7fd8ff99, #2b7fa8dd);
-  transition: height .18s linear;
-}
-.fp__water::before {
-  content: ""; position: absolute; left: -50%; right: -50%; top: -8px; height: 16px;
-  background: radial-gradient(circle, #cdefff 0 6px, transparent 7px);
-  background-size: 22px 16px;
-  animation: crawl 1s linear infinite;
-  opacity: .5;
-}
-.fp__turd {
-  position: absolute; left: 50%; bottom: 12%;
-  font-size: 40px; transform: translateX(-50%);
-  filter: drop-shadow(0 4px 6px #0007);
-  transition: bottom .18s linear;
-}
-.fp__bowl.flushing .fp__turd { animation: swirl .85s cubic-bezier(.4,0,.9,1) forwards; }
-@keyframes swirl {
-  0%   { transform: translateX(-50%) rotate(0deg) scale(1); opacity: 1 }
-  100% { transform: translateX(-50%) translateY(90px) rotate(1080deg) scale(.05); opacity: 0 }
-}
-.fp__bowl.flushing .fp__water { animation: drain .85s ease-in forwards; }
-@keyframes drain { to { height: 2% } }
-.fp__bowl.flushing::after {
-  content: ""; position: absolute; inset: 0;
-  background: conic-gradient(from 0deg, transparent, #ffffff44, transparent, #ffffff44, transparent);
-  animation: rays .5s linear infinite;
-}
-.fp__hist { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+
+.fp__hist { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
 .fp__hist span {
   font-family: var(--mono); font-size: 10.5px; font-weight: 700;
   padding: 3px 7px; border-radius: 5px;
@@ -423,19 +422,19 @@
   box-shadow: 0 0 30px -6px var(--gold), 0 8px 18px #000a;
   z-index: 2;
 }
-.wheel__seg-label { font-family: var(--mono); font-size: 8.4px; font-weight: 700; fill: #fff; letter-spacing: .02em; }
+.wheel__seg-label { font-family: var(--mono); font-size: 14px; font-weight: 800; fill: #fff; letter-spacing: .01em; }
 
 /* ---- DROP ---- */
 .dropwrap { position: relative; width: 100%; display: grid; place-items: center; gap: 10px; }
 .dropslots {
   /* 11 equal cells, no gaps, same total width as the canvas — so every
      label sits exactly under its bucket */
-  display: flex; gap: 0; width: 100%; max-width: 616px;
+  display: flex; gap: 0; width: 100%; max-width: 624px;
 }
 .dropslot {
   flex: 1; text-align: center;
-  font-family: var(--mono); font-size: 9.5px; font-weight: 800;
-  padding: 7px 1px; border-radius: 0 0 6px 6px;
+  font-family: var(--mono); font-size: 8.5px; font-weight: 800;
+  padding: 7px 0; border-radius: 0 0 6px 6px;
   background: #ffffff0d; border: 1px solid #ffffff14; border-top: 0; border-left: 0;
   color: #8a7c67; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
@@ -493,8 +492,9 @@
   /* the games themselves, larger */
   .reels { padding: 9px; gap: 6px; border-width: 2px; width: 100%; }
   .wheelbox { width: min(430px, 92vw); }
-  .fp__bowl { width: min(310px, 80vw); height: min(224px, 58vw); }
-  .fp__mult { font-size: clamp(56px, 19vw, 104px); }
+  .fp__mult { font-size: clamp(26px, 8vw, 44px); }
+  .fp__hint { font-size: 13.5px; }
+  .fp__rider { font-size: clamp(22px, 7vw, 30px); }
   .dropslot { font-size: 7.5px; padding: 6px 0; }
 
   .betrow input { font-size: 25px; padding: 13px 14px; }
@@ -509,4 +509,21 @@
   .trophies { grid-template-columns: 1fr 1fr; gap: 8px; }
   .trophy { padding: 10px; }
   .quotes { grid-template-columns: 1fr; }
+}
+
+/* the rig chip — names the rule that is bending the current round */
+.rigchip {
+  /* top-left, under the stage caption — the bottom of the stage belongs to
+     the bucket labels */
+  position: absolute; left: 12px; top: 32px; z-index: 3;
+  display: none;
+  font-size: 10.5px; font-weight: 800; letter-spacing: .04em;
+  padding: 5px 10px; border-radius: 999px;
+  background: #2a0f0f; border: 1px solid #7a2a12; color: #ffb4a0;
+  box-shadow: 0 0 18px -6px #ff3b30;
+}
+.rigchip.on { display: block; animation: chipin .3s cubic-bezier(.2,1.5,.4,1); }
+@keyframes chipin { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+@media (max-width: 760px) {
+  .rigchip { left: 10px; top: 10px; font-size: 11px; padding: 6px 11px; }
 }

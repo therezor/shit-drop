@@ -6,7 +6,7 @@
 const KEY = 'shitdrop.state.v1';
 
 export const DEFAULTS = {
-  credits: 1000,        // your generous, meaningless welcome bonus
+  credits: 5000,        // your generous, meaningless welcome bonus
   bet: 10,
   spins: 0,
   wagered: 0,           // total credits put in
@@ -18,6 +18,7 @@ export const DEFAULTS = {
   bestNet: 0,
   busts: 0,             // times you hit zero and begged
   pityTaken: 0,
+  deposited: 0,
   trophies: [],
   muted: false,
   mutedNagged: false,

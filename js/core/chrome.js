@@ -66,13 +66,13 @@ function startBonusTimer(el) {
 /* ---------------- cashier (takes nothing) ---------------- */
 
 const METHODS = [
-  ['🫀', 'Your left kidney', 'Instant. Non-refundable.'],
-  ['📺', "Your mum's Netflix password", 'We will change it.'],
-  ['🤝', 'A firm handshake', 'Processing fee: 100%.'],
-  ['🐕', 'The dog', 'She deserves better anyway.'],
-  ['🦷', 'Teeth (any)', 'Minimum 3.'],
-  ['💍', "Someone else's wedding ring", 'No questions asked.'],
-  ['📄', 'A promise', 'We accept verbal contracts and regret.'],
+  ['🫀', 'Your left kidney',       2000],
+  ['💍', "Someone else's ring",    1000],
+  ['🐕', 'The dog',                 500],
+  ['🦷', 'Three teeth',             250],
+  ['📺', "Your mum's Netflix",      100],
+  ['🤝', 'A firm handshake',         10],
+  ['📄', 'A promise',                 1],
 ];
 
 function modal(id, title, bodyHTML, footHTML = '') {
@@ -96,29 +96,26 @@ function modal(id, title, bodyHTML, footHTML = '') {
 
 function buildCashier() {
   const body = `
-    <p><b>Add more money. Right now. Quickly.</b> Pick how you want to pay. We take almost
-    anything, because none of it is real and neither is your balance.</p>
+    <p><b>Pick what you want to pay with.</b></p>
     <ul class="paylist">
       ${METHODS.map((m, i) => `
         <li><button data-pay="${i}">
           <span class="em">${m[0]}</span>
-          <span><b>${m[1]}</b><br><span class="dim" style="font-size:11px">${m[2]}</span></span>
+          <span class="paylist__what">${m[1]}</span>
+          <span class="paylist__amt">+${m[2].toLocaleString('en-US')} 💩</span>
         </button></li>`).join('')}
     </ul>
-    <p class="fineprint">
-      There are no card boxes here. There is no crypto address. You cannot pay us anything,
-      because this whole shop is a joke. Your credits are a made-up number that lives in your
-      own browser. Pick anything above and you get 5 sad credits and a fart.
-    </p>`;
+    <p class="fineprint">There are no card boxes here. You cannot really pay us anything.</p>`;
   const m = modal('mCashier', '💳 Cashier', body);
   m.addEventListener('click', (e) => {
     const b = e.target.closest('[data-pay]');
     if (!b) return;
-    const meth = METHODS[+b.dataset.pay];
-    bank.pity();
+    const [, what, amount] = METHODS[+b.dataset.pay];
+    bank.deposit(amount);
+    sfx.coins(Math.min(30, 6 + amount / 100));
     sfx.fart(3);
     m.classList.remove('on');
-    fanfare.toast(`We took your <b>${meth[1]}</b>. Here is 5 credits. Five. ${taunt.pityLine()}`, 'info', 7000);
+    fanfare.toast(`Took your <b>${what}</b>. Here is <b>${amount.toLocaleString('en-US')} 💩</b>.`, 'info', 5000);
   });
   return m;
 }
@@ -126,44 +123,40 @@ function buildCashier() {
 function buildResponsible() {
   const body = `
     <p><b>Please gamble responsibly.</b></p>
-    <p style="font-size:13px">Ha.</p>
-    <p>Anyway — here are 5 free credits. You will give them straight back. That is why this
-      button exists. Every website that shows you this message also wants you to keep playing.</p>
+    <p style="font-size:13px">Ha. Anyway, here are 100 free credits.</p>
     <p class="fineprint">
-      Now the real bit. This site is a joke, but the tricks in it are not. If real gambling has
-      stopped being fun for you, that is the machine doing its job, not you being weak.
-      In the UK: GamCare, 0808 8020 133, and
+      The real bit: this site is a joke, the tricks in it are not. If real gambling has stopped
+      being fun, that is the machine working, not you being weak. UK: GamCare 0808 8020 133 and
       <a href="https://www.begambleaware.org" target="_blank" rel="noopener">BeGambleAware.org</a>.
-      Other countries have the same thing. This paragraph is not a joke.
     </p>`;
   const m = modal('mResponsible', '🛟 Responsible Gambling', body,
-    '<button class="btn" data-take>Take the 5 credits</button>');
+    '<button class="btn" data-take>Take the 100 credits</button>');
   m.addEventListener('click', (e) => {
     if (!e.target.closest('[data-take]')) return;
-    bank.pity();
+    bank.deposit(100);
     sfx.partyHorn();
     m.classList.remove('on');
-    fanfare.toast('5 credits added. Enjoy your responsible gambling.', 'info');
+    fanfare.toast('100 credits added. Enjoy your responsible gambling.', 'info');
   });
   return m;
 }
 
 function buildFairness() {
   const body = `
-    <p><b>Is this fair?</b></p>
-    <p style="font-size:15px">No.</p>
-    <p>Every game is decided before you press the button. Then the pictures move around for a
-      while to make it feel like a game.</p>
+    <p style="font-size:17px"><b>No.</b></p>
+    <p>Every game is decided before you press the button. Then the pictures move about for a
+      few seconds so it feels like a game.</p>
     <div class="statlist" style="margin:14px 0">
-      <div><span>Money we say you get back</span><span>7.31%</span></div>
-      <div><span>Money you actually get back</span><span>7.31%</span></div>
-      <div><span>Goes that give you nothing</span><span>62 in 100</span></div>
-      <div><span>"Wins" that still lose you money</span><span>93 in 100</span></div>
-      <div><span>Near misses we did on purpose</span><span>all of them</span></div>
-      <div><span>Money we keep</span><span>92.69%</span></div>
+      <div><span>You get back</span><span>6.57%</span></div>
+      <div><span>We keep</span><span>93.43%</span></div>
+      <div><span>Goes that pay nothing</span><span>64 in 100</span></div>
+      <div><span>"Wins" that still lose money</span><span>93 in 100</span></div>
+      <div><span>Near misses done on purpose</span><span>all of them</span></div>
+      <div><span>If you bet 10, you get back</span><span>6.5%</span></div>
+      <div><span>If you bet 500, you get back</span><span>3.4%</span></div>
     </div>
-    <p class="fineprint">Those numbers are true. A real casino says you get back 96% and never
-      tells you about the near misses. The near misses are the bit that keeps you here.</p>`;
+    <p class="fineprint">Those numbers are true — run <code>node _test/rtp.mjs</code>. Yes, betting
+      more really does make it worse. A real casino says 96% and never mentions any of this.</p>`;
   return modal('mFair', '⚖️ Is this fair?', body);
 }
 
@@ -261,7 +254,7 @@ function footerHTML() {
           <p><b>SHIT DROP</b> is run by Absolutely Nobody Ltd, from an address that does not
           exist, with a licence from nobody at all. We are not checked by anyone. Curaçao?
           Never heard of her. 18+, or younger, we truly do not care. Gamble badly.</p>
-          <p>We keep 92.69% of everything. Your winnings cannot be taken out, sent anywhere,
+          <p>We keep 93.43% of everything. Your winnings cannot be taken out, sent anywhere,
           swapped, spent, or proven to exist. The rules are made up as we go along.
           By reading this you agree to be laughed at.
           <a href="#" data-open="mFair">Is this fair?</a> ·

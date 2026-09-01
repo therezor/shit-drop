@@ -17,16 +17,49 @@
   <div id="ghead"></div>
   <div class="game">
     <section class="stage">
-      <span class="stage__title">grab it before it flushes</span>
-      <span class="stage__rtp">you get back 7.31%</span>
+      <span class="stage__title">grab it before it falls back in</span>
+      <span class="stage__rtp">you get back 6.57%</span>
       <div class="fp">
-        <div class="fp__lbl" id="fpLbl">press the button</div>
-        <div class="fp__mult" id="fpMult">1.00×</div>
-        <div class="fp__bowl" id="fpBowl">
-          <div class="fp__rim"></div>
-          <div class="fp__water" id="fpWater"></div>
-          <div class="fp__turd" id="fpTurd">💩</div>
+        <div class="fp__scene">
+          <canvas id="fpCv" width="700" height="350" aria-label="Multiplier line"></canvas>
+
+          <div class="fp__loo" id="fpLoo">
+            <svg viewBox="0 0 150 210" aria-label="Toilet">
+              <defs>
+                <linearGradient id="porc" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#a9b4b8"/>
+                </linearGradient>
+                <linearGradient id="porc2" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#f7fafb"/><stop offset="1" stop-color="#93a0a5"/>
+                </linearGradient>
+                <radialGradient id="wg" cx="0.38" cy="0.3" r="0.9">
+                  <stop offset="0" stop-color="#bdeeff"/><stop offset="1" stop-color="#1c6b93"/>
+                </radialGradient>
+              </defs>
+
+              <ellipse cx="75" cy="200" rx="48" ry="7" fill="#000" opacity=".45"/>
+              <path d="M 30 100 C 33 150 52 162 52 190 L 98 190 C 98 162 117 150 120 100 Z"
+                    fill="url(#porc2)" stroke="#7f8c91" stroke-width="1.4"/>
+              <rect x="46" y="188" width="58" height="11" rx="4" fill="url(#porc)" stroke="#7f8c91" stroke-width="1.4"/>
+              <rect x="56" y="52" width="38" height="22" fill="url(#porc2)"/>
+              <rect x="28" y="11" width="94" height="44" rx="6" fill="url(#porc)" stroke="#7f8c91" stroke-width="1.4"/>
+              <rect x="22" y="1" width="106" height="12" rx="5" fill="#f4f7f8" stroke="#7f8c91" stroke-width="1.4"/>
+              <circle id="fpBtn" cx="75" cy="7" r="5" fill="#c3ccd0" stroke="#7f8c91"/>
+
+              <ellipse cx="75" cy="95" rx="62" ry="27" fill="url(#porc)" stroke="#7f8c91" stroke-width="1.4"/>
+              <ellipse cx="75" cy="92" rx="54" ry="21" fill="none" stroke="#ffffff" opacity=".75" stroke-width="2"/>
+              <ellipse cx="75" cy="97" rx="49" ry="20" fill="#13202a"/>
+              <ellipse id="fpWater" cx="75" cy="100" rx="18" ry="7" fill="url(#wg)"/>
+              <ellipse id="fpSwirl" cx="75" cy="98" rx="44" ry="17" fill="none"
+                       stroke="#cdefff" stroke-width="3" stroke-dasharray="12 9" opacity="0"/>
+            </svg>
+          </div>
+
+          <div class="fp__rider" id="fpRider">💩</div>
+          <div class="fp__mult" id="fpMult">1.00×</div>
         </div>
+
+        <div class="fp__hint" id="fpHint">Press START. Your 💩 climbs out of the toilet. Grab it before it falls back in.</div>
         <div class="fp__hist" id="fpHist"></div>
       </div>
     </section>

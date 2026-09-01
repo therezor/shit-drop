@@ -2,8 +2,8 @@
    SHIT SLOTS — three reels, one payline.
 
    The near-miss here is not a side effect of randomness, it is
-   the product. On a losing spin the first two reels land 💎💎
-   and the third reel is loaded so that the 💎 sits ONE CELL
+   the product. On a losing spin the first two reels land 🖕🖕
+   and the third reel is loaded so that the 🖕 sits ONE CELL
    ABOVE the payline — then it crawls to a stop over two full
    seconds so you can watch it leave.
 
@@ -24,13 +24,13 @@ const GAME = 'slots';
 /* Low symbols are the only ones that ever line up. */
 const LOW  = ['💩', '🧻', '🪰', '🥴'];
 const MID  = ['🚽', '💀'];
-const JACK = '💎';
+const JACK = '🖕';
 const ALL  = [...LOW, ...MID, JACK];
 
 chrome.mount({ active: 'slots.html' });
 gameui.gameHeader(document.getElementById('ghead'), {
   em: '🎰', title: 'SHIT SLOTS',
-  sub: 'Two diamonds every time. The third one is not for you.',
+  sub: 'Two of them every time. The third one is not for you.',
 });
 
 const rail = document.getElementById('rail');
@@ -41,12 +41,12 @@ gameui.mountRail(rail, {
       ${gameui.AUTOPLAY_HTML}
     </div></div>`,
   paytable: [
-    ['💎 💎 💎', 'x500', true],
+    ['🖕 🖕 🖕', 'x500', true],
     ['💀 💀 💀', 'x50', true],
     ['🚽 🚽 🚽', 'x10', true],
     ['Any three the same', 'x1', false],
     ['Any two the same', 'x0.05', false],
-    ['💎 💎 and then nothing', 'x0.01', false],
+    ['🖕 🖕 and then nothing', 'x0.01', false],
   ],
 });
 
@@ -160,9 +160,9 @@ function symbolsFor(r) {
     if (r.ratio < 0.05 || rig.chance(0.45)) {
       const miss = rig.pick(LOW);
       return {
-        reels: [wrap(JACK), wrap(JACK), wrap(miss, JACK)],   // 💎 sits above the line
+        reels: [wrap(JACK), wrap(JACK), wrap(miss, JACK)],   // 🖕 sits above the line
         nearMiss: true,
-        note: '💎💎 consolation',
+        note: '🖕🖕 consolation',
       };
     }
     const s = rig.pick(LOW);
@@ -170,7 +170,7 @@ function symbolsFor(r) {
   }
 
   // total loss. If the rig asked for a near miss, load the third reel
-  // with 💎 one cell above the payline and crawl it out of view.
+  // with 🖕 one cell above the payline and crawl it out of view.
   if (r.nearMiss) {
     const miss = rig.pick(LOW);
     return {
@@ -208,7 +208,7 @@ async function spin() {
   const p1 = spinReel(1, reels[1], { ms: 1500 });
   await Promise.all([p0, p1]);
 
-  // two diamonds are showing. Now make them wait for it.
+  // two of them are showing. Now make them wait for it.
   if (nearMiss) {
     payline.classList.add('hot');
     sfx.siren(1);

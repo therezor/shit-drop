@@ -58,11 +58,7 @@ export function weighted(pairs) {
 
 export const TIERS = ['WIN', 'BIG WIN', 'MEGA WIN', 'JACKPOT'];
 
-/**
- * Base distribution. Real RTP works out to roughly 8%:
- *   .33 * ~0.14  +  .045 * ~1.0  +  .005 * ~2.5  ≈  0.10
- * (and the escalating rig below shaves it further)
- */
+/** Base distribution, used when none of the RULES below are biting. */
 const BASE = [
   ['nothing',   62],   // payout 0
   ['crumb',     33],   // 0.01x - 0.40x  → a loss, presented as a win
@@ -73,26 +69,77 @@ const BASE = [
 /** Debug override: ?rig=nothing|crumb|breakeven|real|win|jackpot */
 const FORCE = qs.get('rig');
 
+/**
+ * THE RULES.
+ *
+ * The base distribution above is only the starting point. On top of it sit
+ * six rules that watch what you are doing and change the odds accordingly.
+ * They are checked in this order and the first one that matches wins, so a
+ * round is only ever bent by one of them.
+ *
+ * Every one of these is a real thing that real operators do. Naming them
+ * out loud, and showing which one just fired, is the only novel part.
+ */
+export const RULES = [
+  {
+    id: 'beginner', chip: '🎣 beginner’s luck',
+    // Your first three goes are generous. Then it stops. This is the oldest
+    // hook there is: let them win early so they believe it can happen.
+    when: (st) => st.spins < 3,
+    weights: [['nothing', 26], ['crumb', 52], ['breakeven', 16], ['real', 6]],
+  },
+  {
+    id: 'broke', chip: '🪣 crumb thrown',
+    // Nearly out of money? A player at zero can't lose any more, so you get
+    // something back. Not enough to leave with. Enough to keep going.
+    when: (st, bet, credits) => credits <= bet * 2,
+    weights: [['nothing', 22], ['crumb', 77], ['breakeven', 1], ['real', 0]],
+  },
+  {
+    id: 'dry', chip: '🪣 crumb thrown',
+    // Eight losses in a row is where people stand up and walk away, so we
+    // interrupt with a win of 0.01 and the full siren.
+    when: (st) => st.lossStreak >= 8,
+    weights: [['nothing', 18], ['crumb', 81], ['breakeven', 1], ['real', 0]],
+  },
+  {
+    id: 'comeback', chip: '🔒 comeback tax',
+    // You actually won twice. That is a fault. It is now being corrected.
+    when: (st) => st.realWinStreak >= 2,
+    weights: [['nothing', 82], ['crumb', 17.9], ['breakeven', 0.1], ['real', 0]],
+  },
+  {
+    id: 'bigbet', chip: '💸 big bet penalty',
+    // The bigger your bet, the worse your odds. This is precisely backwards
+    // from how anyone assumes it works, which is why it is so effective.
+    when: (st, bet) => bet >= 100,
+    weights: [['nothing', 74], ['crumb', 25], ['breakeven', 0.9], ['real', 0.1]],
+  },
+  {
+    id: 'grind', chip: '🐌 session decay',
+    // Still here after sixty goes? You are not going anywhere. No need to
+    // spend money keeping you.
+    when: (st) => st.spins >= 60,
+    weights: [['nothing', 70], ['crumb', 28], ['breakeven', 1.8], ['real', 0.2]],
+  },
+];
+
+/** Which rule is bending the current round, if any. */
+export function activeRule(st = bank.stats(), bet = bank.bet(), credits = bank.credits()) {
+  for (const r of RULES) {
+    try { if (r.when(st, bet, credits)) return r; } catch { /* ignore */ }
+  }
+  return null;
+}
+
 function pickOutcome() {
   if (FORCE) {
-    if (FORCE === 'win' || FORCE === 'jackpot') return 'crumb';  // the signature gag
-    if (BASE.some(([k]) => k === FORCE)) return FORCE;
+    if (FORCE === 'win' || FORCE === 'jackpot') return ['crumb', null];   // the signature gag
+    if (BASE.some(([k]) => k === FORCE)) return [FORCE, null];
   }
-
-  const st = bank.stats();
-  const w = BASE.map(([k, v]) => [k, v]);
-  const set = (k, v) => { const e = w.find(([n]) => n === k); if (e) e[1] = v; };
-
-  // Doing well? The rig notices.
-  if (st.realWinStreak >= 2) { set('nothing', 80); set('crumb', 19.5); set('breakeven', 0.5); set('real', 0.05); }
-
-  // Long dry spell? Throw a crumb, so you keep going. Never a real win.
-  if (st.lossStreak >= 8) { set('nothing', 18); set('crumb', 81); set('breakeven', 1); set('real', 0); }
-
-  // Nearly broke? Definitely a crumb. Can't have you leaving.
-  if (bank.credits() <= bank.bet() * 2) { set('nothing', 30); set('crumb', 69); set('real', 0); }
-
-  return weighted(w);
+  const rule = activeRule();
+  const weights = rule ? rule.weights : BASE;
+  return [weighted(weights.map(([k, v]) => [k, v])), rule];
 }
 
 function payoutFor(outcome, bet) {
@@ -137,12 +184,14 @@ function tierFor(outcome, ratio) {
  *   tier: string|null,       // presentation tier, null if payout is 0
  *   multiplierShown: number, // the tiny multiplier we brag about
  *   nearMiss: boolean,       // animate an almost-win before revealing
- *   isRealWin: boolean       // did you genuinely come out ahead
+ *   isRealWin: boolean,      // did you genuinely come out ahead
+ *   rule: string|null,       // which RULE bent this round
+ *   ruleChip: string|null    // ...and the two words to show the player
  * }}
  */
 export function settle({ bet, game = 'unknown' } = {}) {
   const stake = bank.round2(bet);
-  const outcome = pickOutcome();
+  const [outcome, rule] = pickOutcome();
   const payout = payoutFor(outcome, stake);
   const net = bank.round2(payout - stake);
   const ratio = stake > 0 ? payout / stake : 0;
@@ -157,16 +206,19 @@ export function settle({ bet, game = 'unknown' } = {}) {
     // a total loss almost always gets teased first; that's the addictive bit
     nearMiss: outcome === 'nothing' ? chance(0.82) : chance(0.35),
     isRealWin: net > 0,
+    rule: rule ? rule.id : null,
+    ruleChip: rule ? rule.chip : null,
     game,
   };
 
   console.log(
-    `[rig] ${game} bet=${stake} outcome=${outcome} payout=${payout} net=${net} tier=${res.tier}`
+    `[rig] ${game} bet=${stake} rule=${rule ? rule.id : 'base'} outcome=${outcome} ` +
+    `payout=${payout} net=${net} tier=${res.tier}`
   );
   return res;
 }
 
 /** The number in the corner of every stage. It is not a lie. */
-export const ADVERTISED_RTP = '7.31%';
+export const ADVERTISED_RTP = '6.57%';
 
-export default { settle, rand, range, int, pick, chance, weighted, ADVERTISED_RTP, SEEDED };
+export default { settle, rand, range, int, pick, chance, weighted, RULES, activeRule, ADVERTISED_RTP, SEEDED };

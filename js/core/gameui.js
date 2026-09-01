@@ -11,7 +11,7 @@ import * as fanfare from './fanfare.js';
 import * as taunt from './taunt.js';
 import * as sfx from './sfx.js';
 import * as achievements from './achievements.js';
-import { ADVERTISED_RTP } from './rig.js';
+import { ADVERTISED_RTP, activeRule } from './rig.js';
 
 const CHIPS = [1, 5, 10, 25, 50, 100, 250, 500];
 
@@ -89,12 +89,13 @@ export function mountRail(root, { paytable = [], extra = '' } = {}) {
 
   let nagAt = 0;
   const apply = (v, nag = true) => {
+    const prev = bank.bet();
     const { dir } = bank.setBet(v);
     paintBet();
     if (nag && dir !== 'same') {
       sfx.tick(dir === 'up' ? 1.3 : 0.7);
-      // don't spam: one nag every 2.5s
-      if (Date.now() - nagAt > 2500) {
+      // don't spam: one nag every 8s, and only for a real change of gear
+      if (Date.now() - nagAt > 8000 && Math.abs(bank.bet() - prev) >= 10) {
         nagAt = Date.now();
         fanfare.toast(taunt.betNudge(dir), 'info', 3000);
       }
@@ -163,6 +164,8 @@ export function mountRail(root, { paytable = [], extra = '' } = {}) {
 
   bank.on((e) => { if (e.type === 'reset') { paintBet(); paintStats(); } });
 
+  mountRigChip();
+
   // on a phone the rail opens closed — the only things that matter are the
   // big button and the bet size
   if (window.matchMedia('(max-width: 760px)').matches) {
@@ -171,6 +174,28 @@ export function mountRail(root, { paytable = [], extra = '' } = {}) {
 
   paintBet();
   return { paintStats, paintBet };
+}
+
+/**
+ * The rig chip. Sits in the corner of the stage and names the rule that is
+ * currently bending your odds — "beginner's luck", "big bet penalty" — before
+ * you press anything. Two words, no explaining. Every game gets one.
+ */
+function mountRigChip() {
+  const stage = document.querySelector('.stage');
+  if (!stage || stage.querySelector('.rigchip')) return;
+  const chip = document.createElement('span');
+  chip.className = 'rigchip';
+  stage.appendChild(chip);
+
+  const paint = () => {
+    const r = activeRule();
+    chip.textContent = r ? r.chip : '';
+    chip.classList.toggle('on', !!r);
+  };
+  paint();
+  window.addEventListener('sd:round', paint);
+  bank.on((e) => { if (e.type === 'bet' || e.type === 'reset' || e.type === 'credits') paint(); });
 }
 
 /** Standard page scaffold bits shared by the four game pages. */

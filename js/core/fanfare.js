@@ -101,7 +101,7 @@ function burst(n, tier) {
   const ctx = c.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  const emoji = tier === 'JACKPOT' ? ['💩', '💩', '🪙', '💎', '🧻'] : ['💩', '🪙', '💩'];
+  const emoji = tier === 'JACKPOT' ? ['💩', '💩', '🪙', '🖕', '🧻'] : ['💩', '🪙', '💩'];
   bits = Array.from({ length: n }, () => ({
     x: innerWidth / 2 + (Math.random() - 0.5) * innerWidth * 0.5,
     y: innerHeight * 0.52,

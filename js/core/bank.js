@@ -112,6 +112,14 @@ export function payout({ stakeAmount, payout: pay, game }) {
   return rec;
 }
 
+/** Money in. The cashier pays different amounts for different body parts. */
+export function deposit(amount) {
+  const amt = round2(amount);
+  store.patch({ credits: round2(s().credits + amt), deposited: round2((s().deposited || 0) + amt) });
+  emit({ type: 'credits', credits: credits(), delta: amt, reason: 'deposit' });
+  return credits();
+}
+
 /** The pity handout. Deliberately not enough to matter. */
 export function pity(amount = PITY) {
   store.patch({ credits: round2(s().credits + amount), pityTaken: s().pityTaken + 1 });
