@@ -77,8 +77,10 @@ Every play logs `[sfx] name#n` to the console, which is also how the audio layer
 
 ## Running it
 
-Zero build. No dependencies, no `node_modules`, no backend. It does need to be served over HTTP
-rather than `file://`, because it uses ES modules:
+Zero build. No dependencies, no `node_modules`, no backend.
+
+**Double-click `serve.command`.** It picks a free port, starts a static server and opens your
+browser. Or do it yourself:
 
 ```sh
 python3 -m http.server 8080
@@ -86,6 +88,13 @@ python3 -m http.server 8080
 ```
 
 Or drop it on GitHub Pages as-is.
+
+### "Why can't I just open index.html?"
+
+You'll get `Cross-Origin Request Blocked … CORS request not http`. Browsers treat every `file://`
+document as its own opaque origin, so a `<script type="module">` can't import its siblings — the
+imports are blocked before they load. Nothing to fix: it needs to come off an HTTP server. Any
+static server will do.
 
 ### Debug flags
 
